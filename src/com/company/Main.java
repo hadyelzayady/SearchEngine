@@ -1,20 +1,29 @@
 package com.company;
 
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 
 public class Main {
 
 	public static void main(String[] args) {
-	// write your code here
+		// write your code here
 		WebCrawler web = new WebCrawler();
 		try {
-			List<String> links = web.getInnerLinks("https://www.wikipedia.org/");
-			for (String link : links) {
-				System.out.println(link);
-			}
-		} catch (IOException ex) {
-			System.err.println(ex);
-		}
-    }
+            System.out.println(web.calcChecksum("SHA-256 Hashing in Java"));
+            String temp="www.GOOGLe.com#row=0";
+			String normalizedlink=web.normalizeLink(temp);
+			System.out.println(normalizedlink);
+//			List<String> links = web.getInnerLinks("https://www.wikipedia.org/");
+//			for (String link : links) {
+//				web.normalizeLink(link);
+//			}
+		}// catch (IOException ex) {
+//			System.err.println(ex);
+//		}
+		catch (NoSuchAlgorithmException ex)
+        {
+            System.err.println(ex);
+        }
+	}
 }
