@@ -10,10 +10,12 @@ public class Main {
 		// write your code here
 		WebCrawler web = new WebCrawler();
 		try {
-            System.out.println(web.calcChecksum("SHA-256 Hashing in Java"));
-            String temp="www.GOOGLe.com#row=0";
-			String normalizedlink=web.normalizeLink(temp);
-			System.out.println(normalizedlink);
+//            System.out.println(web.calcChecksum("SHA-256 Hashing in Java"));
+//            String temp="www.GOOGLe.com#row=0";
+//			String normalizedlink=web.normalizeLink(temp);
+//			System.out.println(normalizedlink);
+			DBController cont = DBController.ContollerInit();
+			web.startCrawler();
 //			List<String> links = web.getInnerLinks("https://www.wikipedia.org/");
 //			for (String link : links) {
 //				web.normalizeLink(link);
@@ -21,7 +23,7 @@ public class Main {
 		}// catch (IOException ex) {
 //			System.err.println(ex);
 //		}
-		catch (NoSuchAlgorithmException ex)
+		catch (Exception ex)
         {
             System.err.println(ex);
         }

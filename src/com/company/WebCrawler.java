@@ -2,17 +2,22 @@ package com.company;
 
 import java.io.*;
 import java.net.URL;
+import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.Scanner;
 import java.util.regex.MatchResult;
 import java.util.stream.Collectors;
 import java.security.MessageDigest;
+import java.util.stream.Stream;
+
 public class WebCrawler {
-    Queue<String> pending_links;
+    Queue<String> pending_links = new LinkedList<String>();
     BufferedReader bufferedReader;
+    DBController controller = DBController.ContollerInit();
     void openSeedFile()throws IOException{
         bufferedReader =new BufferedReader(new FileReader("seed.txt"));
     }
@@ -52,8 +57,7 @@ public class WebCrawler {
     public boolean isPageDownloadedBefore(byte[] check_sum)
     {
         //if there is url in visited table with check_sum = check_sum -->do nothong
-        //
-        return true;
+        return controller.isUrlWithCheckSumInVisited(toHexString(check_sum));
 
     }
     public boolean isUrlInSeed(String url)
@@ -67,13 +71,14 @@ public class WebCrawler {
     }
     public String getUnVisitedLink()
     {
-        return "";
+        return "https://www.wikipedia.org/";
     }
     public void addUrlToDownloaded(String url, byte[] checksum)
     {
 
     }
-    public boolean startCrawler() throws  IOException
+
+    public boolean startCrawler()
     {
         String link=getUnVisitedLink();
         while (link!=null)
@@ -85,24 +90,48 @@ public class WebCrawler {
                 {
                     String url = pending_links.poll();
                     BufferedReader page_buffer = downloadPage(url);
-                    byte[] checksum=calcChecksum(page_buffer.toString());
-                    if (isPageDownloadedBefore(checksum))
-                        continue;
-                    //page not downloaed before --> add to visited table with its checksum download its hyper links
-                    addUrlToDownloaded(url,checksum);
-                    List<String> inner_links=getInnerLinks(new Scanner(page_buffer));
+                    String page_string = page_buffer.lines().collect(Collectors.joining());
+                    byte[] checksum = calcChecksum(page_string);//ERROR page
+                    if (!isPageDownloadedBefore(checksum)) {
+                        savePageInFile(checksum, page_string);
+                        //remove this url from seed list and add it to downloaded pages (downloaded=== visited)
 
+                    }
 
                 }
 
-                link = getUnVisitedLink();
+                link = null;//getUnVisitedLink();
             }
             catch (Exception ex)
             {
                 System.out.println(ex);
+                //link=getUnVisitedLink();
+
             }
         }
         return true;
+    }
+
+    public void savePageInFile(byte[] checksum, String page_string) throws IOException {
+        String filename = toHexString(checksum) + ".html";
+        BufferedWriter writer = null;
+        try {
+            writer = new BufferedWriter(new FileWriter(filename));
+            writer.write(page_string);
+            writer.close();
+        } catch (IOException ex) {
+            if (writer != null) {
+                writer.close();
+            }
+        }
+    }
+
+    public String toHexString(byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : bytes) {
+            sb.append(String.format("%02X", b));
+        }
+        return sb.toString();
     }
 
 }
