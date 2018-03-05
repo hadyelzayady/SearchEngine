@@ -2,13 +2,11 @@ package com.company;
 
 import java.io.*;
 import java.net.URL;
+import java.net.URLConnection;
 import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
-import java.util.Scanner;
+import java.util.*;
 import java.util.regex.MatchResult;
 import java.util.stream.Collectors;
 import java.security.MessageDigest;
@@ -77,7 +75,20 @@ public class WebCrawler {
     {
 
     }
+    public boolean isPageHtml(String url)
+    {
+        try {
+            URL obj = new URL(url);
+            URLConnection conn = obj.openConnection();
+            Map<String, List<String>> map = conn.getHeaderFields();
+            return map.get("Content-Type").get(0).contains("text/html");
+        }
+        catch(Exception ex)
+        {
+            return false;
+        }
 
+    }
     public boolean startCrawler()
     {
         String link=getUnVisitedLink();
