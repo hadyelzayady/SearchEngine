@@ -3,7 +3,6 @@ package com.company;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.MongoCredential;
 
 import org.bson.Document;
 
@@ -22,12 +21,14 @@ public class ConnectToDB {
 //        System.out.println("Collection created successfully");
         // Retieving a collection
         try {
+            database.getCollection("Seed").drop();
             database.createCollection("Seed");
         } catch (Exception ex) {
             seed_collection = database.getCollection("Seed");
 
         }
         try {
+            database.getCollection("Visited").drop();
             database.createCollection("Visited");
         } catch (Exception ex) {
             visited_collection = database.getCollection("Visited");
