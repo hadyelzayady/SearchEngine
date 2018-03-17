@@ -4,11 +4,13 @@ import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 
+
 import org.bson.Document;
 
 public class ConnectToDB {
     public static MongoCollection<Document> visited_collection;
     public static MongoCollection<Document> seed_collection;
+    public static MongoCollection<Document> frontier_collection;
 
     public static void DBinit() {
 
@@ -20,23 +22,15 @@ public class ConnectToDB {
 //        database.createCollection("WebCrawler");
 //        System.out.println("Collection created successfully");
         // Retieving a collection
-        try {
             database.getCollection("Seed").drop();
-            database.createCollection("Seed");
-        } catch (Exception ex) {
             seed_collection = database.getCollection("Seed");
 
-        }
-        try {
+        database.getCollection("Frontier").drop();
+        frontier_collection = database.getCollection("Frontier");
+
             database.getCollection("Visited").drop();
-            database.createCollection("Visited");
-        } catch (Exception ex) {
             visited_collection = database.getCollection("Visited");
 
-        } finally {
-            seed_collection = database.getCollection("Seed");
-            visited_collection = database.getCollection("Visited");
-        }
 
     }
 

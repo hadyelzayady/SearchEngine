@@ -2,6 +2,7 @@ package com.company;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
+import com.mongodb.DBObject;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
@@ -9,16 +10,19 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class DBController {
     MongoCollection<Document> seed_collection;
     MongoCollection<Document> visited_collection;
+    MongoCollection<Document> frontier_collection;
 
     private DBController() {
         ConnectToDB.DBinit();
         seed_collection = ConnectToDB.seed_collection;
         visited_collection = ConnectToDB.visited_collection;
+        frontier_collection = ConnectToDB.frontier_collection;
         addUrlToSeed("https://www.wikipedia.org/");
     }
 
@@ -33,7 +37,7 @@ public class DBController {
 
     public void addUrlToSeed(String url) {
         Document document = new Document("_id", url).append("Visited", false);
-        seed_collection.insertOne(document);
+        seed_collection.insertOne(document);//TODO use async driver in insertion and update
     }
 
     public void addUrlToVisited(String url, String checksum) {
@@ -64,11 +68,11 @@ public class DBController {
         seed_collection.updateOne(filter, updateOperationDocument);
     }
 
-    public String getUnVisitedLink() {
+    public synchronized String getUnVisitedLinkAndSet() {
         BasicDBObject equal_query = new BasicDBObject();
         BasicDBObject field = new BasicDBObject();
         equal_query.put("Visited", false);
-        Document unvisited_link = seed_collection.find(equal_query).projection(new BasicDBObject("_id", 1)).limit(1).first();
+        Document unvisited_link = seed_collection.findOneAndDelete(equal_query);
         if (unvisited_link != null)
             return unvisited_link.getString("_id");
         return null;
@@ -78,5 +82,11 @@ public class DBController {
         BasicDBObject document = new BasicDBObject();
         document.put("_id", url);
         seed_collection.findOneAndDelete(document);
+    }
+
+    public void resetFrontier() {
+        BasicDBObject document = new BasicDBObject();
+        frontier_collection.deleteMany(document);//TODO not sure if it does the desired behaviout(clean collection)
+//        frontier_collection.aggregate({"$out":"newCollection"});
     }
 }

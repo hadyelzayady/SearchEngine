@@ -10,15 +10,31 @@ import java.util.*;
 import java.util.regex.MatchResult;
 import java.util.stream.Collectors;
 import java.security.MessageDigest;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
-public class WebCrawler {
-    Queue<String> pending_links = new LinkedList<String>();
+public class WebCrawler implements Runnable {
+
     BufferedReader bufferedReader;
     DBController controller = DBController.ContollerInit();
-    void openSeedFile()throws IOException{
-        bufferedReader =new BufferedReader(new FileReader("seed.txt"));
+    static final AtomicInteger number_crawled = new AtomicInteger(0);
+
+    public void run() {
+        String link = controller.getUnVisitedLinkAndSet();
+        while (number_crawled.getAndAdd(1) != 5000)// && link!=null
+        {
+            try {
+                if (!isPageDownloadedBefore(toHexString(calcChecksum(link)))) {
+                    downloadPage(link);
+                }
+            } catch (Exception ex) {
+                System.out.println(ex);
+            }
+            link = controller.getUnVisitedLinkAndSet();
+        }
+
     }
+
     public boolean doesLinkExistInSeed(String link)
     {
         return false;
@@ -62,12 +78,11 @@ public class WebCrawler {
         return true;
     }
 
-    public void addLinksToSeedAndQue(List<String> links)
+    public void addLinksToSeed(List<String> links)
     {
         for (String link : links) {
             String normalized_link = normalizeLink(link);
             controller.addUrlToSeed(normalized_link);
-            pending_links.add(normalized_link);
         }
     }
     public void addUrlToDownloaded(String url, byte[] checksum)
@@ -88,47 +103,7 @@ public class WebCrawler {
         }
 
     }
-    public boolean startCrawler()
-    {
-        String link = controller.getUnVisitedLink();
-        while (link!=null)
-        {
-            try
-            {
-                pending_links.add(link);
-                while (!pending_links.isEmpty())
-                {
-                    String url = pending_links.poll();
-                    try {
-                        BufferedReader page_buffer = downloadPage(url);
-                    String page_string = page_buffer.lines().collect(Collectors.joining());
-                        byte[] check_sum = calcChecksum(page_string);//ERROR page
-                        String checksum = toHexString(check_sum);
-                        if (!isPageDownloadedBefore(checksum)) {
-                            savePageInFile(checksum, page_string);
-                            System.out.println(url);
-                            //remove this url from seed list and add it to downloaded pages (downloaded=== visited)
-                            List<String> links = getInnerLinks(new Scanner(page_string));
-                            addLinksToSeedAndQue(links);
-                            checkUrlToVisitedInSeed(url);
 
-                            controller.addUrlToVisited(url, checksum);
-                        }
-                    } catch (Exception ex) {
-                        controller.removeLink(url);
-                    }
-                }
-
-                link = controller.getUnVisitedLink();
-            }
-            catch (Exception ex)
-            {
-                System.out.println(ex);
-
-            }
-        }
-        return true;
-    }
 
     private void checkUrlToVisitedInSeed(String url) {
         controller.checkUrl(url);
