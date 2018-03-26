@@ -35,7 +35,7 @@ public class DBController {
     }
 
     public void addUrlToVisited(String url, String checksum) {
-        Document document = new Document("_id", url).append("checksum", checksum);
+        Document document = new Document("_id", url).append("checksum", checksum).append("indexed", false);
         visited_collection.insertOne(document);
     }
 
@@ -87,10 +87,10 @@ public class DBController {
     }
 
     public String[] getUnIndexedPageUrlFilenameAndSet() {
-        Bson newValue = new Document("Indexed", true);
+        Bson newValue = new Document("indexed", true);
         Bson updateOperationDocument = new Document("$set", newValue);
         BasicDBObject document = new BasicDBObject();
-        document.put("Indexed", false);
+        document.put("indexed", false);
         Document page=visited_collection.findOneAndUpdate(document,updateOperationDocument);
         if(page !=null)
             return new String[]{page.getString("_id"),page.getString("checksum")};

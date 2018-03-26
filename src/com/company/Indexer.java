@@ -25,34 +25,35 @@ public class Indexer implements Runnable {
 	public void run() {
 		while (true) {
 			String[] urlfFilename = controller.getUnIndexedPageUrlFilenameAndSet();
+            if (urlfFilename == null) {
+                continue;
+            }
 			System.out.println(urlfFilename);
-			if (urlfFilename != null) {
-				System.out.println("indexer starts");
-				File input = new File(urlfFilename[1]);
-				System.out.println("indexer opens file ");
-				try {
-					Document doc = Jsoup.parse(input, "UTF-8", urlfFilename[0]);
-					Elements links = doc.select("a[href]");
+            System.out.println("indexer starts");
+            File input = new File(urlfFilename[1] + ".html");
+            System.out.println("indexer opens file ");
+            try {
+                Document doc = Jsoup.parse(input, "UTF-8", urlfFilename[0]);
+                Elements links = doc.select("a[href]");
 
-					String body = doc.body().text();
-					String[] tokens = Tokenizer(body);
-					String[] normalized_tokens = Normalizer(tokens);
-					//printing tokens.
-					String file_name = "tokens.txt";
-					FileWriter file_in = new FileWriter(file_name);
-					for (String normalized_token : normalized_tokens) {
-						file_in.write(normalized_token);
-						file_in.write("\n");
-					}
-					file_in.close();
-					for (Element link : links) {
-						controller.addUrlToSeed(normalizeLink(link.attr("abs:href")));
-					}
-				} catch (Exception ex) {
-					System.out.println(ex);
-				}
-			}
-		}
+                String body = doc.body().text();
+                String[] tokens = Tokenizer(body);
+                String[] normalized_tokens = Normalizer(tokens);
+                //printing tokens.
+                String file_name = "tokens.txt";
+                FileWriter file_in = new FileWriter(file_name);
+                for (String normalized_token : normalized_tokens) {
+                    file_in.write(normalized_token);
+                    file_in.write("\n");
+                }
+                file_in.close();
+                for (Element link : links) {
+                    controller.addUrlToSeed(normalizeLink(link.attr("abs:href")));
+                }
+            } catch (Exception ex) {
+                System.out.println(ex);
+            }
+        }
 	}
 
 	public String[] Tokenizer(String body)
