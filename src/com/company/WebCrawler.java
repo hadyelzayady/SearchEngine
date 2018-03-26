@@ -20,17 +20,20 @@ public class WebCrawler implements Runnable {
     static final AtomicInteger number_crawled = new AtomicInteger(0);
 
     public void run() {
-        String link = controller.getUnVisitedLinkAndSet();
-        while (number_crawled.getAndAdd(1) != 5000)// && link!=null
+        String link = controller.getUnVisitedLinkAndDelete();
+        while (number_crawled.getAndAdd(1) != 5000 && link !=null)// && link!=null
         {
             try {
-                if (!isPageDownloadedBefore(toHexString(calcChecksum(link)))) {
+                String checksum=toHexString(calcChecksum(link));
+                if (!isPageDownloadedBefore(checksum)) {
                     downloadPage(link);
+                    System.out.println("crawler downloaded page");
+                    addUrlToVisited(link,checksum);
                 }
             } catch (Exception ex) {
                 System.out.println(ex);
             }
-            link = controller.getUnVisitedLinkAndSet();
+            link = controller.getUnVisitedLinkAndDelete();
         }
 
     }
@@ -85,9 +88,9 @@ public class WebCrawler implements Runnable {
             controller.addUrlToSeed(normalized_link);
         }
     }
-    public void addUrlToDownloaded(String url, byte[] checksum)
+    public void addUrlToVisited(String url, String checksum)
     {
-
+        controller.addUrlToVisited(url,checksum);
     }
     public boolean isPageHtml(String url)
     {

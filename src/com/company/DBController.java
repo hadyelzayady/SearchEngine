@@ -68,7 +68,7 @@ public class DBController {
         seed_collection.updateOne(filter, updateOperationDocument);
     }
 
-    public synchronized String getUnVisitedLinkAndSet() {
+    public synchronized String getUnVisitedLinkAndDelete() {
         BasicDBObject equal_query = new BasicDBObject();
         BasicDBObject field = new BasicDBObject();
         equal_query.put("Visited", false);
@@ -88,5 +88,16 @@ public class DBController {
         BasicDBObject document = new BasicDBObject();
         frontier_collection.deleteMany(document);//TODO not sure if it does the desired behaviout(clean collection)
 //        frontier_collection.aggregate({"$out":"newCollection"});
+    }
+
+    public String[] getUnIndexedPageUrlFilenameAndSet() {
+        Bson newValue = new Document("Indexed", true);
+        Bson updateOperationDocument = new Document("$set", newValue);
+        BasicDBObject document = new BasicDBObject();
+        document.put("Indexed", false);
+        Document page=visited_collection.findOneAndUpdate(document,updateOperationDocument);
+        if(page !=null)
+            return new String[]{page.getString("_id"),page.getString("checksum")};
+        return null;
     }
 }
