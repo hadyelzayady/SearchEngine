@@ -1,29 +1,23 @@
 package com.company;
 
 import com.mongodb.BasicDBObject;
-import com.mongodb.DBCursor;
-import com.mongodb.DBObject;
-import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoCursor;
 import org.bson.Document;
 import org.bson.conversions.Bson;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 public class DBController {
     MongoCollection<Document> seed_collection;
     MongoCollection<Document> visited_collection;
     MongoCollection<Document> frontier_collection;
+    MongoCollection<Document> metadata_collection;
 
     private DBController() {
         ConnectToDB.DBinit();
         seed_collection = ConnectToDB.seed_collection;
         visited_collection = ConnectToDB.visited_collection;
         frontier_collection = ConnectToDB.frontier_collection;
-        addUrlToSeed("https://www.wikipedia.org/");
+        metadata_collection = ConnectToDB.metadata_collection;
+//        addUrlToSeed("https://www.wikipedia.org/");
     }
 
     private static DBController handler = null;
@@ -72,7 +66,7 @@ public class DBController {
         BasicDBObject equal_query = new BasicDBObject();
         BasicDBObject field = new BasicDBObject();
         equal_query.put("Visited", false);
-        Document unvisited_link = seed_collection.findOneAndDelete(equal_query);
+        Document unvisited_link = frontier_collection.findOneAndDelete(equal_query);
         if (unvisited_link != null)
             return unvisited_link.getString("_id");
         return null;
@@ -87,7 +81,9 @@ public class DBController {
     public void resetFrontier() {
         BasicDBObject document = new BasicDBObject();
         frontier_collection.deleteMany(document);//TODO not sure if it does the desired behaviout(clean collection)
-//        frontier_collection.aggregate({"$out":"newCollection"});
+        for (Document doc : seed_collection.find()) {
+            frontier_collection.insertOne(doc);
+        }
     }
 
     public String[] getUnIndexedPageUrlFilenameAndSet() {
@@ -99,5 +95,9 @@ public class DBController {
         if(page !=null)
             return new String[]{page.getString("_id"),page.getString("checksum")};
         return null;
+    }
+
+    public int getCrawledCount() {
+        return 0;
     }
 }

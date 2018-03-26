@@ -3,7 +3,6 @@ package com.company;
 import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
-import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
@@ -11,22 +10,29 @@ import java.util.regex.MatchResult;
 import java.util.stream.Collectors;
 import java.security.MessageDigest;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Stream;
 
 public class WebCrawler implements Runnable {
 
     BufferedReader bufferedReader;
-    DBController controller = DBController.ContollerInit();
+    DBController controller;
     static final AtomicInteger number_crawled = new AtomicInteger(0);
 
+    public WebCrawler() {
+        controller = DBController.ContollerInit();
+        if (controller.getCrawledCount() == 0 || controller.getCrawledCount() == 5000) {
+            controller.resetFrontier();
+        }
+    }
     public void run() {
         String link = controller.getUnVisitedLinkAndDelete();
         while (number_crawled.getAndAdd(1) != 5000 && link !=null)// && link!=null
         {
             try {
-                String checksum=toHexString(calcChecksum(link));
+                BufferedReader page_buffer = downloadPage(link);
+                String page_content = getString(page_buffer);
+                String checksum = toHexString(calcChecksum(page_content));
                 if (!isPageDownloadedBefore(checksum)) {
-                    downloadPage(link);
+                    savePageInFile(checksum, page_content);
                     System.out.println("crawler downloaded page");
                     addUrlToVisited(link,checksum);
                 }
@@ -36,6 +42,20 @@ public class WebCrawler implements Runnable {
             link = controller.getUnVisitedLinkAndDelete();
         }
 
+    }
+
+    private String getString(BufferedReader page_buffer) {
+        String line = null;
+        StringBuilder sb = new StringBuilder();
+        try {
+            while ((line = page_buffer.readLine()) != null) {
+                sb.append(line + "\n");
+            }
+            return sb.toString();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public boolean doesLinkExistInSeed(String link)

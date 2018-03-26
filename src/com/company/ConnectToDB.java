@@ -11,6 +11,7 @@ public class ConnectToDB {
     public static MongoCollection<Document> visited_collection;
     public static MongoCollection<Document> seed_collection;
     public static MongoCollection<Document> frontier_collection;
+    public static MongoCollection<Document> metadata_collection;
 
     public static void DBinit() {
 
@@ -22,7 +23,7 @@ public class ConnectToDB {
 //        database.createCollection("WebCrawler");
 //        System.out.println("Collection created successfully");
         // Retieving a collection
-            database.getCollection("Seed").drop();
+//            database.getCollection("Seed").drop();
             seed_collection = database.getCollection("Seed");
 
         database.getCollection("Frontier").drop();
@@ -30,6 +31,7 @@ public class ConnectToDB {
 
             database.getCollection("Visited").drop();
             visited_collection = database.getCollection("Visited");
+        metadata_collection = database.getCollection("Metadata");
 
 
     }

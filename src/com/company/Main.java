@@ -13,7 +13,7 @@ public class Main {
 	public static void main(String[] args) {
 		// write your code here
 		Scanner scanner = new Scanner(System.in);
-		System.out.print("number of rows: ");
+		System.out.print("number of Threads: ");
 		int num_of_threads = scanner.nextInt();
 		Thread[] crawler_threads = new Thread[num_of_threads];
 		WebCrawler web_crawler = new WebCrawler();

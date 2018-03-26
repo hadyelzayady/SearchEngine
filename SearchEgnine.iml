@@ -10,7 +10,7 @@
     <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
-          <root url="jar://C:/MyJavaDepend/mongodb-driver-async-3.0.4.jar!/" />
+          <root url="jar:///MyJavaDepen/mongodb-driver-async-3.0.4.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -19,7 +19,7 @@
     <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
-          <root url="jar://C:/MyJavaDepend/mongo-java-driver-3.6.3.jar!/" />
+          <root url="jar:///MyJavaDepen/mongo-java-driver-3.0.4.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -28,7 +28,16 @@
     <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
-          <root url="jar://C:/MyJavaDepend/jsoup-1.11.2.jar!/" />
+          <root url="jar:///MyJavaDepen/jsoup-1.11.2.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library>
+        <CLASSES>
+          <root url="jar:///MyJavaDepen/bson-3.0.4.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
