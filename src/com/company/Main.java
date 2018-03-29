@@ -18,7 +18,8 @@ public class Main {
 		Thread[] crawler_threads = new Thread[num_of_threads];
 		WebCrawler web_crawler = new WebCrawler();
 		for (int i = 0; i < num_of_threads; ++i) {
-			crawler_threads[i] = new Thread(web_crawler);
+			crawler_threads[i] = new Thread(new WebCrawler());//todo ,why create new object of crawler
+			crawler_threads[i].setName("thread" + i);
 			crawler_threads[i].start();
 		}
 		new Thread(new Indexer()).start();

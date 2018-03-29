@@ -1,5 +1,10 @@
 package com.company;
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
 import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
@@ -11,9 +16,12 @@ import java.util.stream.Collectors;
 import java.security.MessageDigest;
 import java.util.concurrent.atomic.AtomicInteger;
 
+//todo robot.txt
+//todo restart crawler after finishing
+//todo resume after interrupt
+//todo visit frequency of specific pages
 public class WebCrawler implements Runnable {
 
-    BufferedReader bufferedReader;
     DBController controller;
     static final AtomicInteger number_crawled = new AtomicInteger(0);
 
@@ -21,27 +29,45 @@ public class WebCrawler implements Runnable {
         controller = DBController.ContollerInit();
         if (controller.getCrawledCount() == 0 || controller.getCrawledCount() == 5000) {
             controller.resetFrontier();
+            controller.resetVisited();
+            //todo make Visited in Frontier to null so we can use it ,null--> unvisited and not under work,false--> somethread works on it,true --> visited
         }
     }
     public void run() {
-        String link = controller.getUnVisitedLinkAndDelete();
+        String link = controller.getLinkFromFrontierAndSetOnwork();
         while (number_crawled.getAndAdd(1) != 5000 && link !=null)// && link!=null
         {
+            //todo use ispagehtml to get html pages only
             try {
-                BufferedReader page_buffer = downloadPage(link);
-                String page_content = getString(page_buffer);
-                String checksum = toHexString(calcChecksum(page_content));
-                if (!isPageDownloadedBefore(checksum)) {
-                    savePageInFile(checksum, page_content);
-                    System.out.println("crawler downloaded page");
-                    addUrlToVisited(link,checksum);
+                if (isPageAllowedToCrawl(link)) {
+                    System.out.println(number_crawled);
+//                    BufferedReader page_buffer = downloadPage(link);
+//                    String page_content = getString(page_buffer);
+                    Document page = Jsoup.connect(link).get();
+                    String page_content = page.outerHtml();
+                    String checksum = toHexString(calcChecksum(page_content));
+                    System.out.println(Thread.currentThread().getName());
+                    if (!isPageDownloadedBefore(checksum)) {
+                        savePageInFile(checksum, page_content);//todo we should limit added links to 5000 as we won't parse them
+                        addLinksToFrontier(page);
+                        addUrlToVisited(link, checksum);
+                        controller.setUrlVisited(link);
+                        System.out.println("finished crawling " + link);
+                    }
                 }
             } catch (Exception ex) {
                 System.out.println(ex);
             }
-            link = controller.getUnVisitedLinkAndDelete();
+            link = controller.getLinkFromFrontierAndSetOnwork();
         }
 
+    }
+
+    private void addLinksToFrontier(Document page) {
+        Elements links = page.select("a[href]");
+        for (Element link : links) {//todo try to use insertmany insteadof insert one by one
+            controller.addUrlToFrontier(normalizeLink(link.attr("abs:href")));
+        }
     }
 
     private String getString(BufferedReader page_buffer) {
@@ -70,6 +96,7 @@ public class WebCrawler implements Runnable {
         return normalized_url;
     }
 
+<<<<<<< HEAD
 //    public List<String> getInnerLinks(Scanner content){
 //        String pat = "(?i)(href)(\\s*)=\\s*(.+?)>"; //(?i)(<\s*a)(.+?)(href)(\s*)=\s*(.+?)> to look only in <a tags
 //        return content.findAll(pat).map(MatchResult::group).collect(Collectors.toList());
@@ -78,6 +105,11 @@ public class WebCrawler implements Runnable {
     {
         return bufferedReader.readLine();
 
+=======
+    public List<String> getInnerLinks(Scanner content){
+        String pat = "(?i)(href)(\\s*)=\\s*(.+?)>"; //(?i)(<\s*a)(.+?)(href)(\s*)=\s*(.+?)> to look only in <a tags
+        return content.findAll(pat).map(MatchResult::group).collect(Collectors.toList());
+>>>>>>> 316a92fa5b5d76d1f4cd61ccfb00dad1bef30ba1
     }
     public BufferedReader downloadPage(String url) throws IOException
     {
@@ -128,9 +160,6 @@ public class WebCrawler implements Runnable {
     }
 
 
-    private void checkUrlToVisitedInSeed(String url) {
-        controller.checkUrl(url);
-    }
 
     public void savePageInFile(String checksum, String page_string) throws IOException {
         String filename = checksum + ".html";
@@ -154,4 +183,34 @@ public class WebCrawler implements Runnable {
         return sb.toString();
     }
 
+    public boolean isPageAllowedToCrawl(String url) {
+        try {
+//            URI uri = new URI(url);
+//            String host=uri.getHost();
+//            List<String> robot = controller.getRobot(host);
+//            if(robot !=null)
+//            {
+////                isUrlAllowed(robot);
+//            }
+//            else
+//            {
+//
+//                Document doc = Jsoup.parse(new URL(uri.getScheme()+"://"+host + "/robots.txt").openStream(), "UTF-8", url);
+//                String[] body = doc.text().split("User-agent:");
+//                System.out.println(body.length);
+//                for (String line:body) {
+//                    line=line.trim();
+//                    if(line.startsWith("*"))
+//                    {
+//                        System.out.println(line);
+//                    }
+//                }
+//            }
+            return true;
+        } catch (Exception ex) {
+            System.out.println("webcrawler-> isPageALlowedToCrawl:" + ex);
+        }
+        return true;
+
+    }
 }

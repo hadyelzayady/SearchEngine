@@ -13,7 +13,6 @@ public class ConnectToDB {
     public static MongoCollection<Document> frontier_collection;
     public static MongoCollection<Document> metadata_collection;
     public static MongoCollection<Document> Inverted_file;
-    public static MongoCollection<Document> robots_collection;
 
     public static void DBinit() {
 
@@ -36,7 +35,6 @@ public class ConnectToDB {
         metadata_collection = database.getCollection("Metadata");
        // database.createCollection("Inverted_file");
         Inverted_file= database.getCollection("Inverted_file");
-        robots_collection = database.getCollection("robots");
 
 
     }

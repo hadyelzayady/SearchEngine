@@ -6,7 +6,6 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import java.io.*;
-import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.io.IOException;
@@ -18,7 +17,6 @@ import java.util.Vector;
 
 
 
-//todo remove 'a','an', spaces ,tabs
 public class Indexer implements Runnable {
 
 	private DBController controller = DBController.ContollerInit();
@@ -35,16 +33,15 @@ public class Indexer implements Runnable {
             if (urlfFilename == null) {
                 continue;
             }
-			System.out.println("indexing: " + urlfFilename[0]);
-//            System.out.println("indexer starts");
+			System.out.println(urlfFilename);
+            System.out.println("indexer starts");
             File input = new File(urlfFilename[1] + ".html");
-//            System.out.println("indexer opens file ");
+            System.out.println("indexer opens file ");
             try {
                 Document doc = Jsoup.parse(input, "UTF-8", urlfFilename[0]);
-
+                Elements links = doc.select("a[href]");
 
                 String body = doc.body().text();
-				doc.html();
                 String[] tokens = Tokenizer(body);
                 String[] normalized_tokens = Normalizer(tokens);
                 //printing tokens.
@@ -54,9 +51,7 @@ public class Indexer implements Runnable {
                     file_in.write(normalized_token);
                     file_in.write("\n");
                 }
-				System.out.println("finshed indexing: " + urlfFilename[0]);
                 file_in.close();
-
                 Vector<String> no_space_tokens=remove_spaces(normalized_tokens);
                 String file_name2 = "tokens2.txt";
                 FileWriter file_in2 = new FileWriter(file_name2);
@@ -93,9 +88,7 @@ public class Indexer implements Runnable {
 		String[] out=new String[data_in.length];
 		for(int i=0;i<data_in.length;i++)
 			out[i]=data_in[i].toLowerCase();
-
 		return out;
-
 	}
 	
 	public Vector<String> remove_spaces(String[] data_in)
