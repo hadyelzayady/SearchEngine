@@ -65,18 +65,30 @@ public class Indexer implements Runnable {
                     file_in2.write("\n");
                 }
                 file_in2.close();
-                
+                Token_info[] tokens_info=null;
                 System.out.println("Hello");
                 //Set<String> uniqueWords = new HashSet<String>(Arrays.asList(normalized_tokens));
                 //String[] unique_Words = uniqueWords.toArray(new String[uniqueWords.size()]);
                 for(int i=0;i< no_space_tokens.size();i++)
                 {
-                	controller.AddToInvertedFile( no_space_tokens.get(i), "Url_id", "Position",urlfFilename[0],i);
+                	controller.AddToInvertedFile( no_space_tokens.get(i),
+                			"Url_id", "Position",urlfFilename[0],i);
+                	tokens_info[i]=new Token_info(urlfFilename[0],
+                			number_of_occurance(no_space_tokens,no_space_tokens.get(i)));
                 }
                 System.out.println("after add to inverted");
                /* for (Element link : links) {
                     controller.addUrlToFrontier(normalizeLink(link.attr("abs:href")));
                 }*/
+                String file_name3 = "tokens3.txt";
+                FileWriter file_in3 = new FileWriter(file_name3);
+                for (int i=0;i<tokens_info.length;i++) {
+                    file_in3.write(tokens_info[i].get_url());
+                    file_in3.write("");
+                    file_in3.write(tokens_info[i].get_number_of_occurrances());
+                    file_in2.write("\n");
+                }
+                file_in3.close();
             } catch (Exception ex) {
                 System.out.println(ex);
             }
@@ -111,42 +123,24 @@ public class Indexer implements Runnable {
 		return temp;
 	}
 	
-	public String[] removeDuplicates(String[] arr)
+	public int number_of_occurance(Vector<String>arr,String token)
 	{
-	    // Return, if array is empty
-	    // or contains a single element
-	    if (arr.length==0 || arr.length==1)
-	        return arr;
-	 
-	    String[] temp=new String[arr.length];
-	 
-	    // Start traversing elements
-	    int j = 0;
-	    for (int i=0; i<arr.length-1; i++)
-	 
-	        // If current element is not equal
-	        // to next element then store that
-	        // current element
-	        if (arr[i] != arr[i+1])
-	            temp[j++] = arr[i];
-	 
-	    // Store the last element as whether
-	    // it is unique or repeated, it hasn't
-	    // stored previously
-	    temp[j++] = arr[arr.length-1];
-	 
-	    // Modify original array
-	    for (int i=0; i<j; i++)
-	        arr[i] = temp[i];
-	 
-	    return arr;
+		int count=0;
+		for(int i=0;i<arr.size();i++)
+		{
+			if(arr.get(i)==token)
+				count++;
+		}
+		return count;
 	}
+	
+	
 
 
 	public String[] Normalizer(String[] data_in)
 	{
 		String[] lowered_case=lower_case(data_in);
-		return removeDuplicates(Remove_special_characters(lowered_case));
+		return Remove_special_characters(lowered_case);
 	}
 	private String[] Remove_special_characters(String[] data_in)
 	{

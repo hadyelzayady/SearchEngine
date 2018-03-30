@@ -97,10 +97,6 @@ public class WebCrawler implements Runnable {
     }
 
 
-    public List<String> getInnerLinks(Scanner content){
-        String pat = "(?i)(href)(\\s*)=\\s*(.+?)>"; //(?i)(<\s*a)(.+?)(href)(\s*)=\s*(.+?)> to look only in <a tags
-        return content.findAll(pat).map(MatchResult::group).collect(Collectors.toList());
-    }
     public BufferedReader downloadPage(String url) throws IOException
     {
         return new BufferedReader(new InputStreamReader((new URL(url)).openStream()));

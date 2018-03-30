@@ -1,20 +1,20 @@
 package com.company;
 
 public class Token_info extends Object {
-private int Url_id;
-private int position;
-public Token_info(int Url_id,int position)
+private String Url;
+private int number_of_occurances;
+public Token_info(String Url,int number_of_occurances)
 {
-	this.Url_id=Url_id;
-	this.position=position;
+	this.Url=Url;
+	this.number_of_occurances=number_of_occurances;
 }
-public int get_id()
+public String get_url()
 {
-	return this.Url_id;
+	return this.Url;
 }
-public int position()
+public int get_number_of_occurrances()
 {
-	return this.position;
+	return this.number_of_occurances;
 }
 	
 }
