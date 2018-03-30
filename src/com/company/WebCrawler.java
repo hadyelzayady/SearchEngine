@@ -152,7 +152,7 @@ public class WebCrawler implements Runnable {
 
 
     public void savePageInFile(String checksum, String page_string) throws IOException {
-        String filename = checksum + ".html";
+        String filename = "" + checksum + ".html";
         BufferedWriter writer = null;
         try {
             writer = new BufferedWriter(new FileWriter(filename));
