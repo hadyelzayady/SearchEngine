@@ -2,6 +2,7 @@ package com.company;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
+import com.mongodb.util.JSON;
 import org.bson.conversions.Bson;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -9,6 +10,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.*;
+import java.lang.reflect.Array;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
@@ -182,12 +184,27 @@ public class WebCrawler implements Runnable {
         return sb.toString();
     }
 
+    //todo normalize url in robots
     public boolean isPageAllowedToCrawl(String url) {
         try {
             URI uri = new URI(url);
             String host = uri.getHost();
-            org.bson.Document url_doc = controller.getRobot(host);
-            if (url_doc != null) {
+            String path = uri.getPath();
+            org.bson.Document url_docs = controller.getRobot(host, path);
+            if (url_docs != null) {
+                List<org.bson.Document> allow = (List<org.bson.Document>) url_docs.get("allow");
+                List<org.bson.Document> disallow = (List<org.bson.Document>) url_docs.get("disallow");
+                for (int i = 0; i < allow.size(); i++) {
+                    final String allowed_path = (String) allow.get(i).get("url");
+                    if (path.matches(allowed_path))
+                        return true;
+                }
+                for (int i = 0; i < disallow.size(); i++) {
+                    final String disallowed_path = (String) disallow.get(i).get("url");
+                    if (path.matches(disallowed_path))
+                        return false;
+                }
+                return true;
 //                isUrlAllowed(robot);
             } else {
 
@@ -210,13 +227,13 @@ public class WebCrawler implements Runnable {
                         {
                             for (int i = 1; i < allows.length; i++) {
                                 org.bson.Document document = new org.bson.Document();
-                                document.put("url", allows[i].trim());
+                                document.put("url", allows[i].trim().replaceAll("\\*", ".*"));
                                 allowed_doc_arr.add(document);
                             }
                         }
                         if (!allows[0].equals("")) {
                             org.bson.Document document = new org.bson.Document();
-                            document.put("url", allows[0].trim());
+                            document.put("url", allows[0].trim().replaceAll("\\*", ".*"));
                             disallowed_doc_arr.add(document);
                         }
                     }

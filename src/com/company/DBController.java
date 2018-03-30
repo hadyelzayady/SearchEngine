@@ -5,9 +5,12 @@ import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
 
+import static com.mongodb.client.model.Projections.*;
 import java.util.Iterator;
 
+import com.mongodb.client.model.Projections;
 import org.bson.BsonArray;
+import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import com.company.Token_info;
@@ -189,10 +192,11 @@ public class DBController {
         return false;
     }
 
-    public Document getRobot(String home_url) {
-        BasicDBObject query = new BasicDBObject("url", home_url);
-        Document url_doc = robots_collection.find(query).first();
-        return null;
+    public Document getRobot(String home_url, String url) {
+        BasicDBObject query = new BasicDBObject("_id", home_url);
+//        Document url_doc = robots_collection.find(query).filter(Filters.elemMatch("allow", Filters.regex("url", url))).first();
+        Document url_doc = robots_collection.find(query).projection(exclude("_id")).first();
+        return url_doc;
     }
 
     public void resetVisited() {
