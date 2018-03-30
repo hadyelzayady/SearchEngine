@@ -37,7 +37,7 @@ public class Indexer implements Runnable {
             }
 			System.out.println("indexing: " + urlfFilename[0]);
 //            System.out.println("indexer starts");
-            File input = new File(urlfFilename[1] + ".html");
+			File input = new File("Pages/" + urlfFilename[1] + ".html");
 //            System.out.println("indexer opens file ");
             try {
                 Document doc = Jsoup.parse(input, "UTF-8", urlfFilename[0]);

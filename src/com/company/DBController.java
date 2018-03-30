@@ -85,7 +85,7 @@ public class DBController {
     {
     	Document document=new Document("_id",token);
     	Bson filter = eq("_id", token);
-	    Bson change = push("token_info", new Document(name1,Url_id).append(name2, position)); 	
+        Bson change = push("token_info", new Document(name1, Url_id).append(name2, position));
     	if(Inverted_file.count()==0)
     	{
     		Inverted_file.insertOne(document);
@@ -183,26 +183,23 @@ public class DBController {
         return false;
     }
 
-    public void addRobot(String url) {
-//        String home_url=url.matches("(http)(s?)://");
-    }
+
 
     public boolean isRobotsExist(String home_url) {
         return false;
     }
 
-    public List<String> getRobot(String home_url) {
+    public Document getRobot(String home_url) {
         BasicDBObject query = new BasicDBObject("url", home_url);
-        Document urls = robots_collection.find(query).first();
-        if (urls != null) {
-            List<Document> urlss = (List<Document>) urls.get("disallowed_urls");
-            urlss.get(0);
-            return null;//todo should return array of strings
-        }
+        Document url_doc = robots_collection.find(query).first();
         return null;
     }
 
     public void resetVisited() {
         visited_collection.drop();
+    }
+
+    public void addRobot(Document allow_disallow_doc) {
+        robots_collection.insertOne(allow_disallow_doc);
     }
 }

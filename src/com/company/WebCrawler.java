@@ -1,20 +1,29 @@
 package com.company;
 
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
+import org.bson.conversions.Bson;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.*;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.regex.MatchResult;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.security.MessageDigest;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Updates.push;
 
 //todo robot.txt
 //todo restart crawler after finishing
@@ -175,25 +184,61 @@ public class WebCrawler implements Runnable {
 
     public boolean isPageAllowedToCrawl(String url) {
         try {
-//            URI uri = new URI(url);
-//            String host=uri.getHost();
-//            List<String> robot = controller.getRobot(host);
-//            if(robot !=null)
-//            {
-////                isUrlAllowed(robot);
-//            }
-//            else
-//            {
-//
-//                Document doc = Jsoup.parse(new URL(uri.getScheme()+"://"+host + "/robots.txt").openStream(), "UTF-8", url);
-//                String[] body = doc.text().split("User-agent:");
-//                System.out.println(body.length);
-//                for (String line:body) {
-//                    line=line.trim();
-//                    if(line.startsWith("*"))
+            URI uri = new URI(url);
+            String host = uri.getHost();
+            org.bson.Document url_doc = controller.getRobot(host);
+            if (url_doc != null) {
+//                isUrlAllowed(robot);
+            } else {
+
+                Document doc = Jsoup.parse(new URL(uri.getScheme() + "://" + host + "/robots.txt").openStream(), "UTF-8", url);
+//                String robot="User-agent: * Allow: /w/api.php?action=mobileview&Disallow: /api/Allow: /w/load.php?Allow: /api/rest_v1/?docDisallow: /w/Disallow: /trap/Disallow: /wiki/Special:Disallow: /wiki/Spezial:";
+                String[] body = doc.text().split("User-agent:\\s*\\*[^a-zA-Z]");
+                ArrayList<org.bson.Document> allowed_doc_arr = new ArrayList<org.bson.Document>();
+                ArrayList<org.bson.Document> disallowed_doc_arr = new ArrayList<org.bson.Document>();
+                org.bson.Document allow_disallow_doc = new org.bson.Document();
+                allow_disallow_doc.put("_id", host);
+                if (body.length == 2) {
+                    String disallow_allow = body[1].split("User-agent")[0];
+//                    System.out.println(allow);
+//                    if (disallow_allow.startsWith("Disallow"))
 //                    {
-//                        System.out.println(line);
-//                    }
+                    String[] disallow = disallow_allow.split("Disallow:\\s*");
+                    for (String word : disallow) {
+                        String[] allows = word.split("Allow:\\s*");
+                        if (allows.length > 1)//it contains allows
+                        {
+                            for (int i = 1; i < allows.length; i++) {
+                                org.bson.Document document = new org.bson.Document();
+                                document.put("url", allows[i].trim());
+                                allowed_doc_arr.add(document);
+                            }
+                        }
+                        if (!allows[0].equals("")) {
+                            org.bson.Document document = new org.bson.Document();
+                            document.put("url", allows[0].trim());
+                            disallowed_doc_arr.add(document);
+                        }
+                    }
+                    allow_disallow_doc.put("allow", allowed_doc_arr);
+                    allow_disallow_doc.put("disallow", disallowed_doc_arr);
+                    controller.addRobot(allow_disallow_doc);
+                }
+//                    else
+//                    {
+//                        String[] allow = disallow_allow.split("Allow:\\s*");
+//                        for (String word : allow) {
+//                            String[] disallows = word.split("Disallow:\\s*");
+//                            if (disallows.length > 1)//it contains allows
+//                            {
+//                                disallowed_arr.addAll(Arrays.asList(disallows).subList(1, disallows.length));
+//                            }
+//                            if(! disallows[0].equals(""))//todo this happend in first iteration only ,try to improve that
+//                            {
+//                                allowed_arr.add(disallows[0]);
+//                            }
+//                        }
+            }
 //                }
 //            }
             return true;

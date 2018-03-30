@@ -36,7 +36,7 @@ public class ConnectToDB {
         metadata_collection = database.getCollection("Metadata");
        // database.createCollection("Inverted_file");
         Inverted_file= database.getCollection("Inverted_file");
-        robots_collection = database.getCollection("robots");
+        robots_collection = database.getCollection("Robots");
 
 
     }
