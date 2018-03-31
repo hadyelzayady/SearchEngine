@@ -12,33 +12,40 @@ import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.MatchResult;
 import java.util.stream.Collectors;
 import java.security.MessageDigest;
 import java.util.concurrent.atomic.AtomicInteger;
 
-//todo robot.txt
 //todo restart crawler after finishing
 //todo resume after interrupt
-//todo visit frequency of specific pages
 public class WebCrawler implements Runnable {
 
     DBController controller;
-    static final AtomicInteger number_crawled = new AtomicInteger(0);
+    final int lowest_priority = 5;
+    final int crawler_limit = 5000;
+    static final AtomicLong number_crawled = new AtomicLong(0);
 
     public WebCrawler() {
         controller = DBController.ContollerInit();
-        if (controller.getCrawledCount() == 0 || controller.getCrawledCount() == 5000) {
+        long visited_count = controller.getVisitedCount();
+        if (0 < visited_count && visited_count < crawler_limit)//interrupt happened
+        {
+            controller.setWorkOnPagesToUnVisited();
+            number_crawled.set(visited_count);
+        } else {
             controller.resetFrontier();
             controller.resetVisited();
-            controller.resetRobotStatus();
-            //todo make Visited in Frontier to null so we can use it ,null--> unvisited and not under work,false--> somethread works on it,true --> visited
+            number_crawled.setPlain(0);
         }
     }
     public void run() {
-        String link = controller.getLinkFromFrontierAndSetOnwork();
-        while (number_crawled.getAndAdd(1) != 5000 && link !=null)// && link!=null
+        org.bson.Document link_doc = controller.getLinkFromFrontierAndSetOnwork();
+        String link = link_doc.getString("_id");
+        while (isCrawlerFinished() && link != null)// && link!=null
         {
+            String link_checksum = link_doc.getString("Checksum");
             //todo use ispagehtml to get html pages only
             try {
                 if (isPageAllowedToCrawl(link)) {
@@ -51,19 +58,43 @@ public class WebCrawler implements Runnable {
                     System.out.println(Thread.currentThread().getName());
                     if (!isPageDownloadedBefore(checksum)) {
                         savePageInFile(checksum, page_content);//todo we should limit added links to 5000 as we won't parse them
+                        setCrawlingPriority(checksum, link_checksum, link_doc);
                         addLinksToFrontier(page);
                         addUrlToVisited(link, checksum);
-                        controller.setUrlVisited(link);
+                        controller.setUrlVisited(link, checksum);
                         System.out.println("finished crawling " + link);
                     }
                 }
             } catch (Exception ex) {
                 System.out.println(ex);
-                controller.setUrlVisited(link);// not html content type raises exception and we set it to visited to not visit it again
+                //todo this url must not be crawled again ,option:set checksum to null and in reseting keep visited for null checksum to true
+                controller.setUrlVisited(link, null);// not html content type raises exception and we set it to visited to not visit it again
             }
-            link = controller.getLinkFromFrontierAndSetOnwork();
+            link_doc = controller.getLinkFromFrontierAndSetOnwork();
+            link = link_doc.getString("_id");
         }
 
+    }
+
+    private synchronized boolean isCrawlerFinished() {
+        return number_crawled.getAndAdd(1) <= crawler_limit;//todo change it later to normal integer
+    }
+
+    private void setCrawlingPriority(String new_checksum, String old_checksum, org.bson.Document link_doc) {
+        if (!link_doc.containsKey("Priority")) {
+            controller.setPriority(1, link_doc.getString("_id"));
+            return;
+        }
+        int link_priority = link_doc.getInteger("Priority");
+        if (new_checksum.equals(old_checksum))//not change --> lower priority (higher number is lower priority:1 is highest priority and 5 is lowest
+        {
+            controller.setPriority((link_priority % lowest_priority) + 1, link_doc.getString("_id"));//lower
+        } else//changed
+        {
+            if (link_priority != 1)
+                --link_priority;
+            controller.setPriority(link_priority, link_doc.getString("url"));//higher
+        }
     }
 
     private void addLinksToFrontier(Document page) {

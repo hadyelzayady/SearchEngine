@@ -9,6 +9,7 @@ import static com.mongodb.client.model.Projections.*;
 import java.util.Iterator;
 
 import com.mongodb.client.model.Projections;
+import com.mongodb.client.model.Sorts;
 import com.mongodb.client.model.UpdateOptions;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
@@ -63,7 +64,7 @@ public class DBController {
 
     public void addUrlToFrontier(String url) {
         try {
-            Document document = new Document("_id", url).append("Visited", null);//null indicated just added under work or visited
+            Document document = new Document("_id", url).append("Visited", false).append("Priority", 1);//null indicated just added under work or visited
             frontier_collection.insertOne(document);//TODO use async driver in insertion and update
         } catch (Exception ex) {
 //            System.out.println(url + " already in frontier");
@@ -135,22 +136,21 @@ public class DBController {
         seed_collection.findOneAndDelete(document);
     }
 
-    public synchronized void setUrlVisited(String url) {
+    public synchronized void setUrlVisited(String url, String checksum) {
         Bson filter = new Document("_id", url);
-        Bson newValue = new Document("Visited", true);
+        Bson newValue = new Document("Visited", true).append("Checksum", checksum);
         Bson updateOperationDocument = new Document("$set", newValue);
         frontier_collection.updateOne(filter, updateOperationDocument);
     }
 
-    public synchronized String getLinkFromFrontierAndSetOnwork() {
-        BasicDBObject equal_query = new BasicDBObject();
-        BasicDBObject field = new BasicDBObject();
-        equal_query.put("Visited", null);
-        Bson newValue = new Document("Visited", true);
+    public synchronized Document getLinkFromFrontierAndSetOnwork() {
+        int pr = getminPriority();//todo not sure if it is required as probability of getting no priority 1 is too low
+        Bson filter = new Document("Visited", false).append("Priority", pr);
+        Bson newValue = new Document("Visited", null);
         Bson updateOperationDocument = new Document("$set", newValue);
-        Document unvisited_link = frontier_collection.findOneAndUpdate(equal_query, updateOperationDocument);
+        Document unvisited_link = frontier_collection.findOneAndUpdate(filter, updateOperationDocument);
         if (unvisited_link != null)
-            return unvisited_link.getString("_id");
+            return unvisited_link;
         return null;
     }
     public void removeLink(String url) {
@@ -160,10 +160,18 @@ public class DBController {
     }
 
     public void resetFrontier() {
-        BasicDBObject document = new BasicDBObject();
-        frontier_collection.deleteMany(document);//TODO not sure if it does the desired behaviout(clean collection)
-        for (Document doc : seed_collection.find()) {
-            frontier_collection.insertOne(doc);
+        if (frontier_collection.count() == 0) {
+            BasicDBObject document = new BasicDBObject();
+            frontier_collection.deleteMany(document);//TODO not sure if it does the desired behaviout(clean collection)
+            for (Document doc : seed_collection.find()) {
+                doc.append("Priority", 1);
+                frontier_collection.insertOne(doc);
+            }
+        } else {
+            Bson newValue = new Document("Visited", false);
+            Bson filter = new Document();
+            Bson updateOperationDocument = new Document("$set", newValue);
+            frontier_collection.updateMany(filter, updateOperationDocument);
         }
     }
 
@@ -223,5 +231,34 @@ public class DBController {
         Bson filter = new Document();
         Bson updateOperationDocument = new Document("$set", newValue);
         robots_collection.updateMany(filter, updateOperationDocument);
+    }
+
+    public void setPriority(int priority, String url) {
+        Bson filter = new Document("_id", url);
+        Bson newValue = new Document("Priority", priority);
+        Bson updateOperationDocument = new Document("$set", newValue);
+        frontier_collection.updateOne(filter, updateOperationDocument);
+    }
+
+    public long getVisitedCount() {
+        BasicDBObject query = new BasicDBObject("Visited", true);
+//        Document url_doc = robots_collection.find(query).filter(Filters.elemMatch("allow", Filters.regex("url", url))).first();
+        return frontier_collection.count(query);
+    }
+
+    public void setWorkOnPagesToUnVisited() {
+        Bson newValue = new Document("Visited", false);
+        Bson filter = new Document("Visited", null);
+        Bson updateOperationDocument = new Document("$set", newValue);
+        frontier_collection.updateMany(filter, updateOperationDocument);
+    }
+
+    public int getminPriority() {
+        Bson filter = new Document("Visited", false);
+        Document doc = frontier_collection.find(filter).sort(Sorts.ascending("Priority")).first();
+        if (doc != null) {
+            return doc.getInteger("Priority");
+        }
+        return 1;
     }
 }

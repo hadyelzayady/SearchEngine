@@ -28,7 +28,7 @@ public class ConnectToDB {
 //            database.getCollection("Seed").drop();
             seed_collection = database.getCollection("Seed");
 
-        database.getCollection("Frontier").drop();
+//        database.getCollection("Frontier").drop();
         frontier_collection = database.getCollection("Frontier");
 
             database.getCollection("Visited").drop();
