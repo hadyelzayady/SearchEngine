@@ -9,6 +9,7 @@ import static com.mongodb.client.model.Projections.*;
 import java.util.Iterator;
 
 import com.mongodb.client.model.Projections;
+import com.mongodb.client.model.UpdateOptions;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.Document;
@@ -204,8 +205,10 @@ public class DBController {
     }
 
     public void addRobot(Document allow_disallow_doc, String url) {
-        Bson filter = eq("_id", url);
-        robots_collection.replaceOne(filter, allow_disallow_doc);
+//        Bson filter = eq("_id", url);
+        BasicDBObject query = new BasicDBObject();
+        query.put("_id", url);
+        robots_collection.replaceOne(query, allow_disallow_doc, new UpdateOptions().upsert(true));
     }
 
     public void setRobotUpdated(String url) {
