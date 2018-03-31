@@ -1,16 +1,11 @@
 package com.company;
 
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBObject;
-import com.mongodb.util.JSON;
-import org.bson.conversions.Bson;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.*;
-import java.lang.reflect.Array;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
@@ -18,14 +13,9 @@ import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.regex.MatchResult;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.security.MessageDigest;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static com.mongodb.client.model.Filters.eq;
-import static com.mongodb.client.model.Updates.push;
 
 //todo robot.txt
 //todo restart crawler after finishing
@@ -41,9 +31,11 @@ public class WebCrawler implements Runnable {
         if (controller.getCrawledCount() == 0 || controller.getCrawledCount() == 5000) {
             controller.resetFrontier();
             controller.resetVisited();
+            controller.resetRobotStatus();
             //todo make Visited in Frontier to null so we can use it ,null--> unvisited and not under work,false--> somethread works on it,true --> visited
         }
     }
+
     public void run() {
         String link = controller.getLinkFromFrontierAndSetOnwork();
         while (number_crawled.getAndAdd(1) != 5000 && link !=null)// && link!=null
@@ -95,13 +87,11 @@ public class WebCrawler implements Runnable {
         return null;
     }
 
-    public boolean doesLinkExistInSeed(String link)
-    {
+    public boolean doesLinkExistInSeed(String link) {
         return false;
     }
 
-    public String normalizeLink(String url)
-    {
+    public String normalizeLink(String url) {
         String normalized_url=url.replaceAll("#\\S*","");
         normalized_url=normalized_url.toLowerCase();
         return normalized_url;
@@ -112,54 +102,49 @@ public class WebCrawler implements Runnable {
         String pat = "(?i)(href)(\\s*)=\\s*(.+?)>"; //(?i)(<\s*a)(.+?)(href)(\s*)=\s*(.+?)> to look only in <a tags
         return content.findAll(pat).map(MatchResult::group).collect(Collectors.toList());
     }
-    public BufferedReader downloadPage(String url) throws IOException
-    {
+
+    public BufferedReader downloadPage(String url) throws IOException {
         return new BufferedReader(new InputStreamReader((new URL(url)).openStream()));
     }
-    public byte[] calcChecksum(String content) throws NoSuchAlgorithmException
-    {
+
+    public byte[] calcChecksum(String content) throws NoSuchAlgorithmException {
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
         return digest.digest(
                 content.getBytes(StandardCharsets.UTF_8));
     }
 
-    public boolean isPageDownloadedBefore(String check_sum)
-    {
+    public boolean isPageDownloadedBefore(String check_sum) {
         //if there is url in visited table with check_sum = check_sum -->do nothong
         return controller.isUrlWithCheckSumInVisited(check_sum);
     }
-    public boolean isUrlInSeed(String url)
-    {
+
+    public boolean isUrlInSeed(String url) {
         //check url in seet table
         return true;
     }
 
-    public void addLinksToSeed(List<String> links)
-    {
+    public void addLinksToSeed(List<String> links) {
         for (String link : links) {
             String normalized_link = normalizeLink(link);
             controller.addUrlToSeed(normalized_link);
         }
     }
-    public void addUrlToVisited(String url, String checksum)
-    {
+
+    public void addUrlToVisited(String url, String checksum) {
         controller.addUrlToVisited(url,checksum);
     }
-    public boolean isPageHtml(String url)
-    {
+
+    public boolean isPageHtml(String url) {
         try {
             URL obj = new URL(url);
             URLConnection conn = obj.openConnection();
             Map<String, List<String>> map = conn.getHeaderFields();
             return map.get("Content-Type").get(0).contains("text/html");
-        }
-        catch(Exception ex)
-        {
+        } catch(Exception ex) {
             return false;
         }
 
     }
-
 
 
     public void savePageInFile(String checksum, String page_string) throws IOException {
@@ -187,77 +172,32 @@ public class WebCrawler implements Runnable {
     //todo normalize url in robots
     public boolean isPageAllowedToCrawl(String url) {
         try {
+            //todo if not robots set allow and disallow null
             URI uri = new URI(url);
             String host = uri.getHost();
             String path = uri.getPath();
-            org.bson.Document url_docs = controller.getRobot(host, path);
-            if (url_docs != null) {
-                List<org.bson.Document> allow = (List<org.bson.Document>) url_docs.get("allow");
-                List<org.bson.Document> disallow = (List<org.bson.Document>) url_docs.get("disallow");
-                for (int i = 0; i < allow.size(); i++) {
-                    final String allowed_path = (String) allow.get(i).get("url");
-                    if (path.matches(allowed_path))
-                        return true;
-                }
-                for (int i = 0; i < disallow.size(); i++) {
-                    final String disallowed_path = (String) disallow.get(i).get("url");
-                    if (path.matches(disallowed_path))
-                        return false;
-                }
-                return true;
-//                isUrlAllowed(robot);
-            } else {
-
-                Document doc = Jsoup.parse(new URL(uri.getScheme() + "://" + host + "/robots.txt").openStream(), "UTF-8", url);
-//                String robot="User-agent: * Allow: /w/api.php?action=mobileview&Disallow: /api/Allow: /w/load.php?Allow: /api/rest_v1/?docDisallow: /w/Disallow: /trap/Disallow: /wiki/Special:Disallow: /wiki/Spezial:";
-                String[] body = doc.text().split("User-agent:\\s*\\*[^a-zA-Z]");
-                ArrayList<org.bson.Document> allowed_doc_arr = new ArrayList<org.bson.Document>();
-                ArrayList<org.bson.Document> disallowed_doc_arr = new ArrayList<org.bson.Document>();
-                org.bson.Document allow_disallow_doc = new org.bson.Document();
-                allow_disallow_doc.put("_id", host);
-                if (body.length == 2) {
-                    String disallow_allow = body[1].split("User-agent")[0];
-//                    System.out.println(allow);
-//                    if (disallow_allow.startsWith("Disallow"))
-//                    {
-                    String[] disallow = disallow_allow.split("Disallow:\\s*");
-                    for (String word : disallow) {
-                        String[] allows = word.split("Allow:\\s*");
-                        if (allows.length > 1)//it contains allows
-                        {
-                            for (int i = 1; i < allows.length; i++) {
-                                org.bson.Document document = new org.bson.Document();
-                                document.put("url", allows[i].trim().replaceAll("\\*", ".*"));
-                                allowed_doc_arr.add(document);
-                            }
-                        }
-                        if (!allows[0].equals("")) {
-                            org.bson.Document document = new org.bson.Document();
-                            document.put("url", allows[0].trim().replaceAll("\\*", ".*"));
-                            disallowed_doc_arr.add(document);
-                        }
+            org.bson.Document robot_doc = controller.getRobot(host, path);
+//            Boolean s=robot_doc.getBoolean("updated");
+            if (robot_doc != null) {
+                if (robot_doc.getBoolean("updated"))//robot was downloaded in this crawl
+                {
+                    return isPathAllowedInRobot(path, robot_doc);
+                } else {
+                    String text = downloadRobot(uri, url);
+                    String checksum = toHexString(calcChecksum(text));
+                    if (checksum.equals(robot_doc.getString("checksum"))) {
+                        controller.setRobotUpdated(host);
+                        return isPathAllowedInRobot(path, robot_doc);
+                    } else {
+                        addRobot(text, host, checksum);
                     }
-                    allow_disallow_doc.put("allow", allowed_doc_arr);
-                    allow_disallow_doc.put("disallow", disallowed_doc_arr);
-                    controller.addRobot(allow_disallow_doc);
                 }
-//                    else
-//                    {
-//                        String[] allow = disallow_allow.split("Allow:\\s*");
-//                        for (String word : allow) {
-//                            String[] disallows = word.split("Disallow:\\s*");
-//                            if (disallows.length > 1)//it contains allows
-//                            {
-//                                disallowed_arr.addAll(Arrays.asList(disallows).subList(1, disallows.length));
-//                            }
-//                            if(! disallows[0].equals(""))//todo this happend in first iteration only ,try to improve that
-//                            {
-//                                allowed_arr.add(disallows[0]);
-//                            }
-//                        }
+            } else {
+                String text = downloadRobot(uri, url);
+                String checksum = toHexString(calcChecksum(text));
+                addRobot(text, host, checksum);
+//              String robot="User-agent: * Allow: /w/api.php?action=mobileview&Disallow: /api/Allow: /w/load.php?Allow: /api/rest_v1/?docDisallow: /w/Disallow: /trap/Disallow: /wiki/Special:Disallow: /wiki/Spezial:";
             }
-//                }
-//            }
             return true;
         } catch (Exception ex) {
             System.out.println("webcrawler-> isPageALlowedToCrawl:" + ex);
@@ -265,4 +205,71 @@ public class WebCrawler implements Runnable {
         return true;
 
     }
+
+    private String downloadRobot(URI uri, String url) {
+        try {
+            Document doc = Jsoup.parse(new URL(uri.getScheme() + "://" + uri.getHost() + "/robots.txt").openStream(), "UTF-8", url);
+            return doc.text();
+        } catch (Exception ex) {
+            System.out.println(ex);
+            return "";
+        }
+
+    }
+
+    public void addRobot(String text, String host, String checksum) {
+        try {
+            //text="";//todo test that
+            String[] body = text.split("User-agent:\\s*\\*[^a-zA-Z]");
+            ArrayList<org.bson.Document> allowed_doc_arr = new ArrayList<org.bson.Document>();
+            ArrayList<org.bson.Document> disallowed_doc_arr = new ArrayList<org.bson.Document>();
+            org.bson.Document allow_disallow_doc = new org.bson.Document();
+            allow_disallow_doc.put("_id", host);
+            allow_disallow_doc.put("updated", true);
+            if (body.length == 2) {
+                String disallow_allow = body[1].split("User-agent")[0];
+                String[] disallow = disallow_allow.split("Disallow:\\s*");
+                for (String word : disallow) {
+                    String[] allows = word.split("Allow:\\s*");
+                    if (allows.length > 1)//it contains allows
+                    {
+                        for (int i = 1; i < allows.length; i++) {
+                            org.bson.Document document = new org.bson.Document();
+                            document.put("url", allows[i].trim().replaceAll("\\*", ".*"));
+                            allowed_doc_arr.add(document);
+                        }
+                    }
+                    if (!allows[0].equals("")) {
+                        org.bson.Document document = new org.bson.Document();
+                        document.put("url", allows[0].trim().replaceAll("\\*", ".*"));
+                        disallowed_doc_arr.add(document);
+                    }
+                }
+                allow_disallow_doc.put("allow", allowed_doc_arr);
+                allow_disallow_doc.put("disallow", disallowed_doc_arr);
+                allow_disallow_doc.put("checksum", checksum);
+                controller.addRobot(allow_disallow_doc, host);
+            }
+        } catch (Exception ex) {
+            System.out.println("webcrawler->addRobot: " + ex);
+        }
+    }
+
+    protected boolean isPathAllowedInRobot(String path, org.bson.Document robot) {
+        List<org.bson.Document> allow = (List<org.bson.Document>) robot.get("allow");
+        List<org.bson.Document> disallow = (List<org.bson.Document>) robot.get("disallow");
+        for (int i = 0; i < allow.size(); i++) {
+            final String allowed_path = (String) allow.get(i).get("url");
+            if (path.matches(allowed_path))
+                return true;
+        }
+        for (int i = 0; i < disallow.size(); i++) {
+            final String disallowed_path = (String) disallow.get(i).get("url");
+            if (path.matches(disallowed_path))
+                return false;
+        }
+        return true;
+    }
+
+
 }

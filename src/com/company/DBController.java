@@ -203,7 +203,22 @@ public class DBController {
         visited_collection.drop();
     }
 
-    public void addRobot(Document allow_disallow_doc) {
-        robots_collection.insertOne(allow_disallow_doc);
+    public void addRobot(Document allow_disallow_doc, String url) {
+        Bson filter = eq("_id", url);
+        robots_collection.replaceOne(filter, allow_disallow_doc);
+    }
+
+    public void setRobotUpdated(String url) {
+        Bson filter = new Document("_id", url);
+        Bson newValue = new Document("updated", true);
+        Bson updateOperationDocument = new Document("$set", newValue);
+        robots_collection.updateOne(filter, updateOperationDocument);
+    }
+
+    public void resetRobotStatus() {
+        Bson newValue = new Document("updated", false);
+        Bson filter = new Document();
+        Bson updateOperationDocument = new Document("$set", newValue);
+        robots_collection.updateMany(filter, updateOperationDocument);
     }
 }
