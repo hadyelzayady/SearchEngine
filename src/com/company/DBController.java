@@ -3,14 +3,11 @@ package com.company;
 import com.mongodb.BasicDBObject;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.*;
 
 import static com.mongodb.client.model.Projections.*;
 import java.util.Iterator;
 
-import com.mongodb.client.model.Projections;
-import com.mongodb.client.model.Sorts;
-import com.mongodb.client.model.UpdateOptions;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.Document;
@@ -67,7 +64,7 @@ public class DBController {
     }
     public void addUrlToFrontier(String url) {
         try {
-            Document document = new Document("_id", url).append("Visited", false).append("Priority", 1);//null indicated just added under work or visited
+            Document document = new Document("_id", url).append("Visited", false).append("Priority", 2);//null indicated just added under work or visited
             frontier_collection.insertOne(document);//TODO use async driver in insertion and update
         } catch (Exception ex) {
 //            System.out.println(url + " already in frontier");
@@ -91,7 +88,6 @@ public class DBController {
     
     public void AddToInvertedFile(String token,String name1,String name2,String Url_id,int position)
     {
-    	System.out.println("Hady Zyady");
     	Document document=new Document("_id",token);
     	Bson filter = eq("_id", token);
         Bson change = push("token_info", new Document(name1, Url_id).append(name2, position));
@@ -149,11 +145,12 @@ public class DBController {
     }
 
     public synchronized Document getLinkFromFrontierAndSetOnwork() {
-        int pr = getminPriority();//todo not sure if it is required as probability of getting no priority 1 is too low
-        Bson filter = new Document("Visited", false).append("Priority", pr);
+        Bson filter = new Document("Visited", false);
         Bson newValue = new Document("Visited", null);
+        Bson sort_doc = new Document("Priority", 1);
         Bson updateOperationDocument = new Document("$set", newValue);
-        Document unvisited_link = frontier_collection.findOneAndUpdate(filter, updateOperationDocument);
+        Bson Doc = new FindOneAndUpdateOptions().getSort();
+        Document unvisited_link = frontier_collection.findOneAndUpdate(filter, updateOperationDocument, new FindOneAndUpdateOptions().sort(sort_doc));
         if (unvisited_link != null)
             return unvisited_link;
         return null;
@@ -167,22 +164,31 @@ public class DBController {
     public void resetFrontier() {
         if (frontier_collection.count() == 0) {
             BasicDBObject document = new BasicDBObject();
-            frontier_collection.deleteMany(document);//TODO not sure if it does the desired behaviout(clean collection)
+            frontier_collection.deleteMany(document);
             for (Document doc : seed_collection.find()) {
                 doc.append("Priority", 1);
                 doc.append("Offset", 0);
                 frontier_collection.insertOne(doc);
             }
         } else {
-            Bson newValue = new Document("Visited", false);
-            Bson dec_value = new Document("Priority", -1);
-            Bson filter = new Document();
-            Bson updateOperationDocument = new Document("$set", newValue).append("$inc", dec_value);
+            //dec priority of not visited pages in last crawler
+            Bson newValue = new Document("Priority", -1);
+            Bson filter = new Document("Visited", false).append("Priority", new Document("$ne", 1));
+            Bson updateOperationDocument = new Document("$inc", newValue);
             frontier_collection.updateMany(filter, updateOperationDocument);
-            Bson min_value = new Document("Priority", 1);
-            Bson updateOperationDocument2 = new Document("$max", min_value);
-            frontier_collection.updateMany(filter, updateOperationDocument2);
+            //reset all pages to not visited
+            Bson visited_newValue = new Document("Visited", false);
+            Bson filter2 = new Document();
+            Bson updateOperationDocument2 = new Document("$set", visited_newValue);
+            frontier_collection.updateMany(filter2, updateOperationDocument2);
         }
+    }
+
+    private void resetRobot() {
+        Bson newValue = new Document("Updated", false);
+        Bson filter = new Document();
+        Bson updateOperationDocument = new Document("$set", newValue);
+        robots_collection.updateMany(filter, updateOperationDocument);
     }
 
     public String[] getUnIndexedPageUrlFilenameAndSet() {
@@ -270,5 +276,11 @@ public class DBController {
             return doc.getInteger("Priority");
         }
         return 1;
+    }
+
+    public void deleteUrlFromFrontier(String link) {
+        BasicDBObject document = new BasicDBObject();
+        document.put("_id", link);
+        frontier_collection.findOneAndDelete(document);
     }
 }

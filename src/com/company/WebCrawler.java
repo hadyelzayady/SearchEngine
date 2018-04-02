@@ -17,6 +17,8 @@ import java.security.MessageDigest;
 
 //as froniter is very large and we limited to 5000 somesites may not be crawled
 //todo restart crawler after finishing
+//todo add only changes pages to visited so indexer won't index it again
+//reset robot to updated=false
 public class WebCrawler implements Runnable {
 
     /**
@@ -25,7 +27,7 @@ public class WebCrawler implements Runnable {
     private DBController controller;
     private final int crawler_limit = 30;
     private static final AtomicLong number_crawled = new AtomicLong(0);
-    final private int lowest_priority = 2;
+    final private int lowest_priority = 5;
 
     WebCrawler() {
         controller = DBController.ContollerInit();
@@ -57,22 +59,25 @@ public class WebCrawler implements Runnable {
                         String checksum = toHexString(calcChecksum(page_content));
                         System.out.println(Thread.currentThread().getName());
                         if (!isPageDownloadedBefore(checksum)) {
-                            savePageInFile(checksum, page_content);//todo we should limit added links to 5000 as we won't parse them
+                            savePageInFile(checksum, page_content);
                             setCrawlingPriority(checksum, link_checksum, link_doc);
                             addLinksToFrontier(page);
                             addUrlToVisited(link, checksum);
                             controller.setUrlVisited(link, checksum);
                             System.out.println("finished crawling " + link);
                         }
+                    } else {
+                        controller.deleteUrlFromFrontier(link);
                     }
                 } catch (Exception ex) {
                     System.out.println(ex);
                     number_crawled.decrementAndGet();
                     //this todo is wrong as the link may work later//todo this url must not be crawled again ,option:set checksum to null and in reseting keep visited for null checksum to true
-                    controller.setUrlVisited(link, null);// not html content type raises exception and we set it to visited to not visit it again
+                    controller.deleteUrlFromFrontier(link);// not html content type raises exception and we set it to visited to not visit it again
                 }
             }
         }
+
 
     }
 
@@ -82,18 +87,15 @@ public class WebCrawler implements Runnable {
 
     private void setCrawlingPriority(String new_checksum, String old_checksum, org.bson.Document link_doc) {
         if (!link_doc.containsKey("Priority")) {
-            controller.setPriority(1, link_doc.getString("_id"));
+            controller.setPriority(2, link_doc.getString("_id"));
             return;
         }
         int link_priority = link_doc.getInteger("Priority");
-        if (new_checksum.equals(old_checksum))//not change --> lower priority (higher number is lower priority:1 is highest priority and 5 is lowest
+        if (new_checksum.equals(old_checksum) && link_priority <= lowest_priority)//not change --> lower priority (higher number is lower priority:1 is highest priority and 5 is lowest
         {
-            controller.setPriority((link_priority % lowest_priority) + 1, link_doc.getString("_id"));//lower
-        } else//changed
-        {
-            if (link_priority != 1)
-                --link_priority;
-            controller.setPriority(link_priority, link_doc.getString("url"));//higher
+            controller.setPriority(link_priority + 2, link_doc.getString("_id"));//lower
+        } else {
+            controller.setPriority(++link_priority, link_doc.getString("_id"));//lower
         }
     }
 
@@ -163,10 +165,8 @@ public class WebCrawler implements Runnable {
         return sb.toString();
     }
 
-    //todo normalize url in robots
     private boolean isPageAllowedToCrawl(String url) {
         try {
-            //todo if not robots set allow and disallow null
             URI uri = new URI(url);
             String host = uri.getHost();
             String path = uri.getPath();
@@ -204,7 +204,6 @@ public class WebCrawler implements Runnable {
 
     private boolean addRobotAndCheckAllow(String text, String host, String checksum, String path) {
         try {
-            //text="";//todo test that
 
             String[] body = text.split("User-agent:\\s*\\*[^a-zA-Z]");
             ArrayList<String> allowed_doc_arr = new ArrayList<String>();

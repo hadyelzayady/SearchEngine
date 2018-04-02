@@ -41,8 +41,6 @@ public class Indexer implements Runnable {
 //            System.out.println("indexer opens file ");
             try {
                 Document doc = Jsoup.parse(input, "UTF-8", urlfFilename[0]);
-
-
                 String body = doc.body().text();
 				doc.html();
                 String[] tokens = Tokenizer(body);
