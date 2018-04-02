@@ -14,6 +14,7 @@ public class ConnectToDB {
     public static MongoCollection<Document> metadata_collection;
     public static MongoCollection<Document> Inverted_file;
     public static MongoCollection<Document> robots_collection;
+    public static MongoCollection<Document> linkdatabase_collection;
 
     public static void DBinit() {
 

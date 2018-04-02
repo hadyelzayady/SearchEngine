@@ -27,6 +27,7 @@ public class DBController {
     MongoCollection<Document> Inverted_file;
 
     MongoCollection<Document> robots_collection;
+    MongoCollection<Document> linkdatabase_collection;
 
     private DBController() {
         ConnectToDB.DBinit();
@@ -34,6 +35,7 @@ public class DBController {
         visited_collection = ConnectToDB.visited_collection;
         frontier_collection = ConnectToDB.frontier_collection;
         metadata_collection = ConnectToDB.metadata_collection;
+        linkdatabase_collection = ConnectToDB.linkdatabase_collection;
 
         Inverted_file =  ConnectToDB.Inverted_file;
 //        addUrlToSeed("https://www.wikipedia.org/");
