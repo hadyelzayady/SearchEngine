@@ -88,11 +88,15 @@ public class DBController {
         return false;
     }
     
-    public void AddToInvertedFile(String token,String name1,String name2,String Url_id,int position)
+    public void AddToInvertedFile(Token_info token,String name1,String name2,String name3)
     {
-    	Document document=new Document("_id",token);
-    	Bson filter = eq("_id", token);
-        Bson change = push("token_info", new Document(name1, Url_id).append(name2, position));
+    	//System.out.println("Hady Zyady");
+    	Document document=new Document("_id",token.get_token_name());
+    	Bson filter = eq("_id", token.get_token_name());
+    	Document temp_doc0= new Document(name1,token.get_token_Url())
+        		.append(name2,token.get_token_position());
+    	temp_doc0.append(name3, token.get_token_type());
+        Bson change = push("token_info",temp_doc0);
     	if(Inverted_file.count()==0)
     	{
     		Inverted_file.insertOne(document);
@@ -101,12 +105,16 @@ public class DBController {
     	}
     	else
     	{
-    		Document temp_doc = null;
+    		Document temp_doc = new Document();
+    		Bson filter2 = Filters.in("token_info",change);
+    		Bson query = Filters.elemMatch("token_info", filter2);
+    		Bson update = new org.bson.Document("$pull", filter2);
+    		Inverted_file.updateMany(query, update);
     		FindIterable<Document> docs = Inverted_file.find();
     		boolean found=false;
     		for(Document doc:docs)
     		{
-    			if(doc.getString("_id").equals(token))
+    			if(doc.getString("_id").equals(token.get_token_name()))
     			{
     				found=true;
     				temp_doc=doc;
@@ -120,18 +128,11 @@ public class DBController {
     		}
     		else
     		{
-    			//Inverted_file.deleteOne(Filters.eq("_id", token));
-    			//temp_doc.append("token_info",new Document(name1,Url_id).append(name2, position));
-    			//String s1=temp_doc.toString();
-    			//System.out.println(s1);
-    			//Bson filter = eq("_id", token);
-    		    //Bson change = push("token_info", new Document(name1,Url_id).append(name2, position));
-    			if(!temp_doc.containsValue(new Document(name1,Url_id).append(name2, position)))
+    			if(!temp_doc.get("token_info").toString().contains(temp_doc0.toString()))
     		      Inverted_file.updateOne(filter, change);
     		}
     	}
     }
-
 
     public void deleteUrlFromSeed(String url) {
         BasicDBObject document = new BasicDBObject();
