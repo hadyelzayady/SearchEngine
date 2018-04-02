@@ -62,7 +62,7 @@ public class WebCrawler implements Runnable {
                         if (!isPageDownloadedBefore(checksum)) {
                             savePageInFile(checksum, page_content);
                             setCrawlingPriority(checksum, link_checksum, link_doc);
-                            addLinksToFrontier(page);
+                            addLinksToFrontier(link, page);
                             addUrlToVisited(link, checksum);
                             controller.setUrlVisited(link, checksum);
                             System.out.println("finished crawling " + link);
@@ -100,8 +100,9 @@ public class WebCrawler implements Runnable {
         }
     }
 
-    private void addLinksToFrontier(Document page) {
+    private void addLinksToFrontier(String url, Document page) {
         Elements links = page.select("a[href]");
+        controller.linkdbAddOutLinks(url, links.size());
         for (Element link : links) {//todo try to use insertmany insteadof insert one by one
             controller.addUrlToFrontier(normalizeLink(link.attr("abs:href")));
         }

@@ -286,4 +286,11 @@ public class DBController {
         document.put("_id", link);
         frontier_collection.findOneAndDelete(document);
     }
+
+    public void linkdbAddOutLinks(String url, int size) {
+        Document newValue = new Document("outLinks", size);
+        BasicDBObject query = new BasicDBObject();
+        query.put("_id", url);
+        linkdatabase_collection.replaceOne(query, newValue, new UpdateOptions().upsert(true));
+    }
 }

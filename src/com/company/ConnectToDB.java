@@ -31,7 +31,7 @@ public class ConnectToDB {
 
 //        database.getCollection("Frontier").drop();
         frontier_collection = database.getCollection("Frontier");
-
+        linkdatabase_collection = database.getCollection("Link_db");
             database.getCollection("Visited").drop();
             visited_collection = database.getCollection("Visited");
         metadata_collection = database.getCollection("Metadata");
