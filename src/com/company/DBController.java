@@ -107,10 +107,10 @@ public class DBController {
     	else
     	{
     		Document temp_doc = new Document();
-    		Bson filter2 = Filters.in("token_info",change);
+    		/*Bson filter2 = Filters.in("token_info",change);
     		Bson query = Filters.elemMatch("token_info", filter2);
     		Bson update = new org.bson.Document("$pull", filter2); 
-    		Inverted_file.updateMany(query, update);
+    		Inverted_file.updateMany(query, update);*/
     		FindIterable<Document> docs = Inverted_file.find();
     		boolean found=false;
     		for(Document doc:docs)
