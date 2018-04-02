@@ -53,13 +53,17 @@
 
 
 
-utc
 
 
 
 
 
+stailc
+ocrais
 
+irish
+hunger
+strike
 
 
 
@@ -198,6 +202,7 @@ utc
 
 
 
+pira
 
 
 
@@ -227,6 +232,7 @@ utc
 
 
 
+garion
 
 
 
@@ -249,6 +255,7 @@ utc
 
 
 
+cd
 
 
 
@@ -307,8 +314,6 @@ utc
 
 
 
-cymbium
-cymbium
 
 
 
@@ -322,11 +327,9 @@ cymbium
 
 
 
-en
 
 
 
-en
 
 
 
@@ -402,7 +405,6 @@ en
 
 
 
-i
 
 
 
@@ -420,7 +422,6 @@ i
 
 
 
-iii
 
 
 
@@ -496,7 +497,7 @@ iii
 
 
 
-i
+lg
 
 
 
@@ -644,6 +645,7 @@ i
 
 
 
+faq
 
 
 
@@ -676,7 +678,284 @@ i
 
 
 
-httpsbewikipediaorgwindexphptitleoldid
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+office
+building
+of
+the
+lvm
+mnster
+north
+rhinewestphalia
+germany
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+nederlands
+
+deutsch
+
+
+
+ting
+vit
+
+cebuano
+
+svenska
+
+espaol
+
+english
+
+winaray
+
+italiano
+
+
+
+polski
+
+franais
+
+
+
+
+
+
+
+
+
+catal
+
+
+
+portugus
+
+
+
+norsk
+
+dansk
+
+romn
+
+bahasa
+melayu
+
+baso
+minangkabau
+
+bnlmg
+
+euskara
+
+
+
+srpskohrvatski
+
+
+
+
+
+srpski
+
+slovenina
+
+
+
+esperanto
+
+bahasa
+indonesia
+
+etina
+
+
+
+trke
+
+suomi
+
+magyar
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+httpskowikipediaorgwindexphptitleoldid
+
+
+
+
+
+
+
+
+
 
 
 
@@ -736,7 +1015,6 @@ pdf
 
 
 
-mediawiki
 
 
 
@@ -752,52 +1030,62 @@ mediawiki
 
 
 
+catal
 
-
-
-
-
-
-
-
-
-
-
-
-
+cebuano
+etina
+dansk
 deutsch
 english
+esperanto
 espaol
+eesti
+euskara
+
+suomi
 franais
+galego
+
+
+hrvatski
+magyar
+bahasa
+indonesia
 italiano
 
+
+latina
 lietuvi
-latvieu
+baso
+minangkabau
+bahasa
+melayu
 nederlands
+norsk
+nynorsk
+norsk
 polski
 portugus
+romn
 
+srpskohrvatski
+
+
+simple
+english
+slovenina
+slovenina
+
+
+srpski
 svenska
+trke
 
+ozbekcha
 ting
 vit
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-creative
-commons
-attributionsharealike
+volapk
+winaray
 
 
 
@@ -817,7 +1105,38 @@ attributionsharealike
 
 
 
-cookie
-statement
+
+
+
+
+
+
+
+
+
+
+
+wikipedia
+
+
+
+
+
+
+wikimedia
+foundation
+inc
+
+
+
+
+
+
+
+
+
+
+
+
 
 

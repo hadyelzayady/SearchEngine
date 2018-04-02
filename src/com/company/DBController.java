@@ -130,11 +130,23 @@ public class DBController {
     		else
     		{
     			if(!temp_doc.get("token_info").toString().contains(temp_doc0.toString()))
+    			/*Bson filter5 =new Document("token_info",temp_doc0);
+    			if(Inverted_file.find(filter5)==null)*/
+    			{
     		      Inverted_file.updateOne(filter, change);
+    			}
     		}
     	}
     }
-
+    
+    public boolean found_unindexed_pages()
+    {
+    	boolean found=false;
+    	 Bson filter = new Document("indexed",false);
+    	 if(visited_collection.find(filter)!=null)
+    		 found=true;
+    	 return found;
+    }
     public void deleteUrlFromSeed(String url) {
         BasicDBObject document = new BasicDBObject();
         document.put("_id", url);
