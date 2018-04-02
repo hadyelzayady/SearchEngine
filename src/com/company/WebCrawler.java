@@ -260,6 +260,7 @@ public class WebCrawler implements Runnable {
 
     private boolean isPathAllowedInRobot(String path, org.bson.Document robot) {
         try {
+        	System.out.println("Error1");
             List<String> allow = (List<String>) robot.get("allow");
             List<String> disallow = (List<String>) robot.get("disallow");
             for (final String allowed_path : allow) {

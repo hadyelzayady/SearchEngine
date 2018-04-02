@@ -44,9 +44,28 @@ public class Indexer implements Runnable {
 
 
                 String body = doc.body().text();
-				doc.html();
                 String[] tokens = Tokenizer(body);
                 String[] normalized_tokens = Normalizer(tokens);
+                Vector<String> no_space_tokens=remove_spaces(normalized_tokens);
+                Elements headers = doc.select("h1,h2,h3,h4,h5,h6");
+                Vector<String> no_space_headers;
+                 String tag;
+                for(Element header:headers)
+                {
+                    tag=header.tagName().toLowerCase();
+                	String header_name=header.text();
+                	String[] header_tokens=Tokenizer(header_name);
+                	String[] normalized_headers= Normalizer(header_tokens);
+                    no_space_headers=remove_spaces(normalized_headers);
+                    for(int i=0;i< no_space_headers.size();i++)
+                    {
+                      Token_info temp_token=new Token_info(no_space_headers.get(i),urlfFilename[0],tag,i);
+                      controller.AddToInvertedFile(temp_token,"Url_id","Position","Type");
+                      no_space_tokens.remove(temp_token.get_token_name());
+                    }
+                }
+                
+                
                 //printing tokens.
                 String file_name = "tokens.txt";
                 FileWriter file_in = new FileWriter(file_name);
@@ -57,7 +76,7 @@ public class Indexer implements Runnable {
 				System.out.println("finshed indexing: " + urlfFilename[0]);
                 file_in.close();
 
-                Vector<String> no_space_tokens=remove_spaces(normalized_tokens);
+               
                 String file_name2 = "tokens2.txt";
                 FileWriter file_in2 = new FileWriter(file_name2);
                 for (int i=0;i<no_space_tokens.size();i++) {
@@ -65,17 +84,17 @@ public class Indexer implements Runnable {
                     file_in2.write("\n");
                 }
                 file_in2.close();
-                Token_info[] tokens_info=null;
+                //Token_info[] tokens_info=null;
                 System.out.println("Hello");
                 //Set<String> uniqueWords = new HashSet<String>(Arrays.asList(normalized_tokens));
                 //String[] unique_Words = uniqueWords.toArray(new String[uniqueWords.size()]);
                 for(int i=0;i< no_space_tokens.size();i++)
                 {
-                	controller.AddToInvertedFile( no_space_tokens.get(i),
-                			"Url_id", "Position",urlfFilename[0],i);
+                	Token_info temp_token=new Token_info(no_space_tokens.get(i),urlfFilename[0],"text",i);
+                	controller.AddToInvertedFile(temp_token,"Url_id","Position","Type");
                 	/*tokens_info[i]=new Token_info(urlfFilename[0],
                 			number_of_occurance(no_space_tokens,no_space_tokens.get(i)));*/
-                }
+                }      
                 System.out.println("after add to inverted");
                /* for (Element link : links) {
                     controller.addUrlToFrontier(normalizeLink(link.attr("abs:href")));
