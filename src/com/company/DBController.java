@@ -119,7 +119,8 @@ public class DBController {
     			//System.out.println(s1);
     			//Bson filter = eq("_id", token);
     		    //Bson change = push("token_info", new Document(name1,Url_id).append(name2, position));
-    		    Inverted_file.updateOne(filter, change);
+    			if(!temp_doc.containsValue(new Document(name1,Url_id).append(name2, position)))
+    		      Inverted_file.updateOne(filter, change);
     		}
     	}
     }
