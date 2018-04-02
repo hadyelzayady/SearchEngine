@@ -45,7 +45,6 @@ public class DBController {
     }
 
     private static DBController handler = null;
-
     public static DBController ContollerInit() {
         if (handler == null) {
             handler = new DBController();
@@ -62,6 +61,10 @@ public class DBController {
         }
     }
 
+    private int getOffsetAndUpdate() {
+//   metadata_collection.findOneAndUpdate()
+        return 1;
+    }
     public void addUrlToFrontier(String url) {
         try {
             Document document = new Document("_id", url).append("Visited", false).append("Priority", 1);//null indicated just added under work or visited
@@ -166,13 +169,18 @@ public class DBController {
             frontier_collection.deleteMany(document);//TODO not sure if it does the desired behaviout(clean collection)
             for (Document doc : seed_collection.find()) {
                 doc.append("Priority", 1);
+                doc.append("Offset", 0);
                 frontier_collection.insertOne(doc);
             }
         } else {
             Bson newValue = new Document("Visited", false);
+            Bson dec_value = new Document("Priority", -1);
             Bson filter = new Document();
-            Bson updateOperationDocument = new Document("$set", newValue);
+            Bson updateOperationDocument = new Document("$set", newValue).append("$inc", dec_value);
             frontier_collection.updateMany(filter, updateOperationDocument);
+            Bson min_value = new Document("Priority", 1);
+            Bson updateOperationDocument2 = new Document("$max", min_value);
+            frontier_collection.updateMany(filter, updateOperationDocument2);
         }
     }
 
