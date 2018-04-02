@@ -15,16 +15,17 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.security.MessageDigest;
 
+//as froniter is very large and we limited to 5000 somesites may not be crawled
 //todo restart crawler after finishing
-//todo resume after interrupt
 public class WebCrawler implements Runnable {
 
     /**
      *
      */
     private DBController controller;
-    private final int crawler_limit = 5000;
+    private final int crawler_limit = 30;
     private static final AtomicLong number_crawled = new AtomicLong(0);
+    final private int lowest_priority = 2;
 
     WebCrawler() {
         controller = DBController.ContollerInit();
@@ -36,40 +37,41 @@ public class WebCrawler implements Runnable {
         } else {
             controller.resetFrontier();
             controller.resetVisited();
-            number_crawled.setPlain(0);
+            number_crawled.set(0);
         }
     }
 
     public void run() {
-        org.bson.Document link_doc = controller.getLinkFromFrontierAndSetOnwork();
-        String link = link_doc.getString("_id");
-        while (isCrawlerFinished() && link != null)// && link!=null
+
+        while (isCrawlerFinished())// && link!=null
         {
-            String link_checksum = link_doc.getString("Checksum");
-            //todo use ispagehtml to get html pages only
-            try {
-                if (isPageAllowedToCrawl(link)) {
-                    System.out.println(number_crawled);
-                    Document page = Jsoup.connect(link).get();
-                    String page_content = page.outerHtml();
-                    String checksum = toHexString(calcChecksum(page_content));
-                    System.out.println(Thread.currentThread().getName());
-                    if (!isPageDownloadedBefore(checksum)) {
-                        savePageInFile(checksum, page_content);//todo we should limit added links to 5000 as we won't parse them
-                        setCrawlingPriority(checksum, link_checksum, link_doc);
-                        addLinksToFrontier(page);
-                        addUrlToVisited(link, checksum);
-                        controller.setUrlVisited(link, checksum);
-                        System.out.println("finished crawling " + link);
+            org.bson.Document link_doc = controller.getLinkFromFrontierAndSetOnwork();
+            if (link_doc != null) {
+                String link = link_doc.getString("_id");
+                String link_checksum = link_doc.getString("Checksum");
+                try {
+                    if (isPageAllowedToCrawl(link)) {
+                        System.out.println(number_crawled);
+                        Document page = Jsoup.connect(link).get();
+                        String page_content = page.outerHtml();
+                        String checksum = toHexString(calcChecksum(page_content));
+                        System.out.println(Thread.currentThread().getName());
+                        if (!isPageDownloadedBefore(checksum)) {
+                            savePageInFile(checksum, page_content);//todo we should limit added links to 5000 as we won't parse them
+                            setCrawlingPriority(checksum, link_checksum, link_doc);
+                            addLinksToFrontier(page);
+                            addUrlToVisited(link, checksum);
+                            controller.setUrlVisited(link, checksum);
+                            System.out.println("finished crawling " + link);
+                        }
                     }
+                } catch (Exception ex) {
+                    System.out.println(ex);
+                    number_crawled.decrementAndGet();
+                    //this todo is wrong as the link may work later//todo this url must not be crawled again ,option:set checksum to null and in reseting keep visited for null checksum to true
+                    controller.setUrlVisited(link, null);// not html content type raises exception and we set it to visited to not visit it again
                 }
-            } catch (Exception ex) {
-                System.out.println(ex);
-                //todo this url must not be crawled again ,option:set checksum to null and in reseting keep visited for null checksum to true
-                controller.setUrlVisited(link, null);// not html content type raises exception and we set it to visited to not visit it again
             }
-            link_doc = controller.getLinkFromFrontierAndSetOnwork();
-            link = link_doc.getString("_id");
         }
 
     }
@@ -86,7 +88,6 @@ public class WebCrawler implements Runnable {
         int link_priority = link_doc.getInteger("Priority");
         if (new_checksum.equals(old_checksum))//not change --> lower priority (higher number is lower priority:1 is highest priority and 5 is lowest
         {
-            int lowest_priority = 5;
             controller.setPriority((link_priority % lowest_priority) + 1, link_doc.getString("_id"));//lower
         } else//changed
         {
@@ -208,7 +209,7 @@ public class WebCrawler implements Runnable {
             ArrayList<String> allowed_doc_arr = new ArrayList<String>();
             ArrayList<String> disallowed_doc_arr = new ArrayList<String>();
             org.bson.Document allow_disallow_doc = new org.bson.Document();
-            allow_disallow_doc.put("_id", host);
+            allow_disallow_doc.put("_id", normalizeLink(host));
             allow_disallow_doc.put("updated", true);
             if (text.equals("")) {
                 allow_disallow_doc.put("allow", allowed_doc_arr);
