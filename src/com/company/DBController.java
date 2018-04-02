@@ -91,6 +91,7 @@ public class DBController {
     
     public void AddToInvertedFile(String token,String name1,String name2,String Url_id,int position)
     {
+    	System.out.println("Hady Zyady");
     	Document document=new Document("_id",token);
     	Bson filter = eq("_id", token);
         Bson change = push("token_info", new Document(name1, Url_id).append(name2, position));

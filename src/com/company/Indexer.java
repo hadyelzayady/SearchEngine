@@ -73,14 +73,14 @@ public class Indexer implements Runnable {
                 {
                 	controller.AddToInvertedFile( no_space_tokens.get(i),
                 			"Url_id", "Position",urlfFilename[0],i);
-                	tokens_info[i]=new Token_info(urlfFilename[0],
-                			number_of_occurance(no_space_tokens,no_space_tokens.get(i)));
+                	/*tokens_info[i]=new Token_info(urlfFilename[0],
+                			number_of_occurance(no_space_tokens,no_space_tokens.get(i)));*/
                 }
                 System.out.println("after add to inverted");
                /* for (Element link : links) {
                     controller.addUrlToFrontier(normalizeLink(link.attr("abs:href")));
                 }*/
-                String file_name3 = "tokens3.txt";
+                /*String file_name3 = "tokens3.txt";
                 FileWriter file_in3 = new FileWriter(file_name3);
                 for (int i=0;i<tokens_info.length;i++) {
                     file_in3.write(tokens_info[i].get_url());
@@ -88,7 +88,7 @@ public class Indexer implements Runnable {
                     file_in3.write(tokens_info[i].get_number_of_occurrances());
                     file_in2.write("\n");
                 }
-                file_in3.close();
+                file_in3.close();*/
             } catch (Exception ex) {
                 System.out.println(ex);
             }
