@@ -28,7 +28,7 @@ public class ConnectToDB {
 //            database.getCollection("Seed").drop();
             seed_collection = database.getCollection("Seed");
 
-        database.getCollection("Frontier").drop();
+//        database.getCollection("Frontier").drop();
         frontier_collection = database.getCollection("Frontier");
 
             database.getCollection("Visited").drop();
@@ -36,7 +36,7 @@ public class ConnectToDB {
         metadata_collection = database.getCollection("Metadata");
        // database.createCollection("Inverted_file");
         Inverted_file= database.getCollection("Inverted_file");
-        robots_collection = database.getCollection("robots");
+        robots_collection = database.getCollection("Robots");
 
 
     }
