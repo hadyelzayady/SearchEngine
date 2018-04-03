@@ -88,7 +88,8 @@ public class DBController {
             return true;
         return false;
     }
-    
+
+
     public void AddToInvertedFile(Token_info token,String name1,String name2,String name3)
     {
     	//System.out.println("Hady Zyady");
@@ -130,9 +131,22 @@ public class DBController {
     		else
     		{
     			if(!temp_doc.get("token_info").toString().contains(temp_doc0.toString()))
+    			/*Bson filter5 =new Document("token_info",temp_doc0);
+    			if(Inverted_file.find(filter5)==null)*/
+    			{
     		      Inverted_file.updateOne(filter, change);
+    			}
     		}
     	}
+    }
+
+    public boolean found_unindexed_pages()
+    {
+    	boolean found=false;
+    	 Bson filter = new Document("indexed",false);
+    	 if(visited_collection.find(filter)!=null)
+    		 found=true;
+    	 return found;
     }
 
     public void deleteUrlFromSeed(String url) {

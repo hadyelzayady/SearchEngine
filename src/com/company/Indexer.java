@@ -5,6 +5,9 @@ import org.jsoup.helper.Validate;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+
+import com.mongodb.client.FindIterable;
+
 import java.io.*;
 import java.lang.reflect.Array;
 import java.util.Arrays;
@@ -30,7 +33,9 @@ public class Indexer implements Runnable {
 		return normalized_url;
 	}
 	public void run() {
-		while (true) {
+		while(true)
+		{
+		while (controller.found_unindexed_pages()) {
 			String[] urlfFilename = controller.getUnIndexedPageUrlFilenameAndSet();
             if (urlfFilename == null) {
                 continue;
@@ -110,6 +115,7 @@ public class Indexer implements Runnable {
                 System.out.println(ex);
             }
         }
+		}
 	}
 
 	public String[] Tokenizer(String body)
@@ -151,9 +157,6 @@ public class Indexer implements Runnable {
 		return count;
 	}
 	
-	
-
-
 	public String[] Normalizer(String[] data_in)
 	{
 		String[] lowered_case=lower_case(data_in);
