@@ -39,11 +39,16 @@ public class WebCrawler implements Runnable {
             number_crawled.set(visited_count);
         } else {
             controller.resetFrontier();
-            controller.resetVisited();
+//            controller.resetVisited();
             number_crawled.set(0);
         }
     }
 
+    public void recrawlreset() {
+        controller.resetFrontier();
+//        controller.resetVisited();
+        number_crawled.set(0);
+    }
     public void run() {
 
         while (isCrawlerFinished())// && link!=null
@@ -87,16 +92,19 @@ public class WebCrawler implements Runnable {
     }
 
     private void setCrawlingPriority(String new_checksum, String old_checksum, org.bson.Document link_doc) {
+        String link = link_doc.getString("_id");
         if (!link_doc.containsKey("Priority")) {
-            controller.setPriority(2, link_doc.getString("_id"));
+            controller.setPriority(2, link);
             return;
         }
         int link_priority = link_doc.getInteger("Priority");
-        if (new_checksum.equals(old_checksum) && link_priority <= lowest_priority)//not change --> lower priority (higher number is lower priority:1 is highest priority and 5 is lowest
+        boolean notchanged = new_checksum.equals(old_checksum);
+        if (notchanged && link_priority <= lowest_priority)//not change --> lower priority (higher number is lower priority:1 is highest priority and 5 is lowest
         {
-            controller.setPriority(link_priority + 2, link_doc.getString("_id"));//lower
-        } else {
-            controller.setPriority(++link_priority, link_doc.getString("_id"));//lower
+            controller.setPriority(link_priority + 2, link);//lower
+        } else if (!notchanged) {
+            System.out.println("changed page" + link);
+            controller.setPriority(++link_priority, link);//lower
         }
     }
 
@@ -104,7 +112,9 @@ public class WebCrawler implements Runnable {
         Elements links = page.select("a[href]");
         controller.linkdbAddOutLinks(url, links.size());
         for (Element link : links) {//todo try to use insertmany insteadof insert one by one
-            controller.addUrlToFrontier(normalizeLink(link.attr("abs:href")));
+            String norm_link = normalizeLink(link.attr("abs:href"));
+            controller.addUrlToFrontier(norm_link);
+            controller.addInnLink(url, norm_link);
         }
     }
 

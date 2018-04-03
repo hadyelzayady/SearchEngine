@@ -13,6 +13,7 @@ import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import com.company.Token_info;
+import org.jsoup.nodes.Element;
 import static com.mongodb.client.model.Filters.*;
 import static com.mongodb.client.model.Updates.*;
 
@@ -292,5 +293,9 @@ public class DBController {
         BasicDBObject query = new BasicDBObject();
         query.put("_id", url);
         linkdatabase_collection.replaceOne(query, newValue, new UpdateOptions().upsert(true));
+    }
+
+    public void addInnLink(String url, String mylink) {
+
     }
 }
