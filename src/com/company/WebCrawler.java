@@ -43,7 +43,9 @@ public class WebCrawler implements Runnable {
         }
     }
 
+    int iter = 1;
     public void recrawlreset() {
+        iter++;
         controller.resetFrontier();
 //        controller.resetVisited();
         number_crawled.set(0);
@@ -56,27 +58,27 @@ public class WebCrawler implements Runnable {
             org.bson.Document link_doc = controller.getLinkFromFrontierAndSetOnwork();
             if (link_doc != null) {
                 String link = link_doc.getString("_id");
-                String link_checksum = link_doc.getString("Checksum");
+                String link_checksum = link_doc.getString("checksum");
                 try {
                     if (isPageAllowedToCrawl(link)) {
-                        System.out.println(number_crawled);
                         Document page = Jsoup.connect(link).get();
                         String page_content = page.outerHtml();
                         String checksum = toHexString(calcChecksum(page_content));
                         System.out.println(Thread.currentThread().getName());
                         if (!isPageDownloadedBefore(checksum)) {
+                            System.out.println(number_crawled);
                             savePageInFile(checksum, page_content);
                             setCrawlingPriority(checksum, link_checksum, link_doc);
                             addLinksToFrontier(link, page);
                             addUrlToVisited(link, checksum);
                             controller.setUrlVisited(link, checksum);
-                            System.out.println("finished crawling " + link);
+                            System.out.println("iter" + iter + " finished crawling " + link);
                         }
                     } else {
                         controller.deleteUrlFromFrontier(link);
                     }
                 } catch (Exception ex) {
-                    System.out.println(ex);
+                    System.out.println(link + " " + ex);
                     number_crawled.decrementAndGet();
                     //this todo is wrong as the link may work later//todo this url must not be crawled again ,option:set checksum to null and in reseting keep visited for null checksum to true
                     controller.deleteUrlFromFrontier(link);// not html content type raises exception and we set it to visited to not visit it again
@@ -93,18 +95,23 @@ public class WebCrawler implements Runnable {
 
     private void setCrawlingPriority(String new_checksum, String old_checksum, org.bson.Document link_doc) {
         String link = link_doc.getString("_id");
-        if (!link_doc.containsKey("Priority")) {
-            controller.setPriority(2, link);
+        if (!link_doc.containsKey("Priority") || old_checksum == null) {
+            controller.setPriority(2, link, 2);
             return;
         }
         int link_priority = link_doc.getInteger("Priority");
+        int link_offset = link_doc.getInteger("offset");
         boolean notchanged = new_checksum.equals(old_checksum);
-        if (notchanged && link_priority <= lowest_priority)//not change --> lower priority (higher number is lower priority:1 is highest priority and 5 is lowest
+        if (notchanged)//not change --> lower priority (higher number is lower priority:1 is highest priority and 5 is lowest
         {
-            controller.setPriority(link_priority + 2, link);//lower
+            if (link_offset < lowest_priority)
+                link_offset++;
+            controller.setPriority(link_offset, link, link_offset);//lower
         } else if (!notchanged) {
             System.out.println("changed page" + link);
-            controller.setPriority(++link_priority, link);//lower
+            if (link_offset > 2)
+                --link_offset;
+            controller.setPriority(link_offset, link, link_offset);//lower
         }
     }
 
@@ -271,7 +278,6 @@ public class WebCrawler implements Runnable {
 
     private boolean isPathAllowedInRobot(String path, org.bson.Document robot) {
         try {
-        	System.out.println("Error1");
             List<String> allow = (List<String>) robot.get("allow");
             List<String> disallow = (List<String>) robot.get("disallow");
             for (final String allowed_path : allow) {

@@ -8,10 +8,10 @@ public class CrawlerMain implements Runnable {
     }
 
     public void run() {
+        WebCrawler web_crawler = new WebCrawler();
         while (true) {
             try {
                 Thread[] crawler_threads = new Thread[num_of_threads];
-                WebCrawler web_crawler = new WebCrawler();
                 for (int i = 0; i < num_of_threads; ++i) {
                     crawler_threads[i] = new Thread(web_crawler);
                     crawler_threads[i].setName("thread" + i);
