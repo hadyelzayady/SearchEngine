@@ -27,7 +27,7 @@ public class DBController {
     MongoCollection<Document> metadata_collection;
 
     MongoCollection<Document> Inverted_file;
-
+    MongoCollection<Document> Useless_words;
     MongoCollection<Document> robots_collection;
     MongoCollection<Document> linkdatabase_collection;
 
