@@ -66,26 +66,6 @@ public class Indexer implements Runnable {
 						}
 					}
 
-
-					//printing tokens.
-					String file_name = "tokens.txt";
-					FileWriter file_in = new FileWriter(file_name);
-					for (String normalized_token : normalized_tokens) {
-						file_in.write(normalized_token);
-						file_in.write("\n");
-					}
-					System.out.println("finshed indexing: " + urlfFilename[0]);
-					file_in.close();
-
-
-					String file_name2 = "tokens2.txt";
-					FileWriter file_in2 = new FileWriter(file_name2);
-					for (int i = 0; i < no_space_tokens.size(); i++) {
-						file_in2.write(no_space_tokens.get(i));
-						file_in2.write("\n");
-					}
-					file_in2.close();
-					//Token_info[] tokens_info=null;
 					System.out.println("Hello");
 					//Set<String> uniqueWords = new HashSet<String>(Arrays.asList(normalized_tokens));
 					//String[] unique_Words = uniqueWords.toArray(new String[uniqueWords.size()]);
