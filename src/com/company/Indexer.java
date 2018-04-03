@@ -33,72 +33,69 @@ public class Indexer implements Runnable {
 		return normalized_url;
 	}
 	public void run() {
-		while(true)
-		{
-		while (controller.found_unindexed_pages()) {
-			String[] urlfFilename = controller.getUnIndexedPageUrlFilenameAndSet();
-            if (urlfFilename == null) {
-                continue;
-            }
-			System.out.println("indexing: " + urlfFilename[0]);
+		while (true) {
+			while (controller.found_unindexed_pages()) {
+				String[] urlfFilename = controller.getUnIndexedPageUrlFilenameAndSet();
+				if (urlfFilename == null) {
+					continue;
+				}
+				System.out.println("indexing: " + urlfFilename[0]);
 //            System.out.println("indexer starts");
-			File input = new File("Pages/" + urlfFilename[1] + ".html");
+				File input = new File("Pages/" + urlfFilename[1] + ".html");
 //            System.out.println("indexer opens file ");
-            try {
-                Document doc = Jsoup.parse(input, "UTF-8", urlfFilename[0]);
-                String body = doc.body().text();
-                String[] tokens = Tokenizer(body);
-                String[] normalized_tokens = Normalizer(tokens);
-                Vector<String> no_space_tokens=remove_spaces(normalized_tokens);
-                Elements headers = doc.select("h1,h2,h3,h4,h5,h6");
-                Vector<String> no_space_headers;
-                 String tag;
-                for(Element header:headers)
-                {
-                    tag=header.tagName().toLowerCase();
-                	String header_name=header.text();
-                	String[] header_tokens=Tokenizer(header_name);
-                	String[] normalized_headers= Normalizer(header_tokens);
-                    no_space_headers=remove_spaces(normalized_headers);
-                    for(int i=0;i< no_space_headers.size();i++)
-                    {
-                      Token_info temp_token=new Token_info(no_space_headers.get(i),urlfFilename[0],tag,i);
-                      controller.AddToInvertedFile(temp_token,"Url_id","Position","Type");
-                      no_space_tokens.remove(temp_token.get_token_name());
-                    }
-                }
-                
-                
-                //printing tokens.
-                String file_name = "tokens.txt";
-                FileWriter file_in = new FileWriter(file_name);
-                for (String normalized_token : normalized_tokens) {
-                    file_in.write(normalized_token);
-                    file_in.write("\n");
-                }
-				System.out.println("finshed indexing: " + urlfFilename[0]);
-                file_in.close();
+				try {
+					Document doc = Jsoup.parse(input, "UTF-8", urlfFilename[0]);
+					String body = doc.body().text();
+					String[] tokens = Tokenizer(body);
+					String[] normalized_tokens = Normalizer(tokens);
+					Vector<String> no_space_tokens = remove_spaces(normalized_tokens);
+					Elements headers = doc.select("h1,h2,h3,h4,h5,h6");
+					Vector<String> no_space_headers;
+					String tag;
+					controller.deleteInvertedFile(urlfFilename[0]);
+					for (Element header : headers) {
+						tag = header.tagName().toLowerCase();
+						String header_name = header.text();
+						String[] header_tokens = Tokenizer(header_name);
+						String[] normalized_headers = Normalizer(header_tokens);
+						no_space_headers = remove_spaces(normalized_headers);
+						for (int i = 0; i < no_space_headers.size(); i++) {
+							Token_info temp_token = new Token_info(no_space_headers.get(i), urlfFilename[0], tag, i);
+							controller.AddToInvertedFile(temp_token, "Url_id", "Position", "Type");
+							no_space_tokens.remove(temp_token.get_token_name());
+						}
+					}
 
-               
-                String file_name2 = "tokens2.txt";
-                FileWriter file_in2 = new FileWriter(file_name2);
-                for (int i=0;i<no_space_tokens.size();i++) {
-                    file_in2.write(no_space_tokens.get(i));
-                    file_in2.write("\n");
-                }
-                file_in2.close();
-                //Token_info[] tokens_info=null;
-                System.out.println("Hello");
-                //Set<String> uniqueWords = new HashSet<String>(Arrays.asList(normalized_tokens));
-                //String[] unique_Words = uniqueWords.toArray(new String[uniqueWords.size()]);
-                for(int i=0;i< no_space_tokens.size();i++)
-                {
-                	Token_info temp_token=new Token_info(no_space_tokens.get(i),urlfFilename[0],"text",i);
-                	controller.AddToInvertedFile(temp_token,"Url_id","Position","Type");
+
+					//printing tokens.
+					String file_name = "tokens.txt";
+					FileWriter file_in = new FileWriter(file_name);
+					for (String normalized_token : normalized_tokens) {
+						file_in.write(normalized_token);
+						file_in.write("\n");
+					}
+					System.out.println("finshed indexing: " + urlfFilename[0]);
+					file_in.close();
+
+
+					String file_name2 = "tokens2.txt";
+					FileWriter file_in2 = new FileWriter(file_name2);
+					for (int i = 0; i < no_space_tokens.size(); i++) {
+						file_in2.write(no_space_tokens.get(i));
+						file_in2.write("\n");
+					}
+					file_in2.close();
+					//Token_info[] tokens_info=null;
+					System.out.println("Hello");
+					//Set<String> uniqueWords = new HashSet<String>(Arrays.asList(normalized_tokens));
+					//String[] unique_Words = uniqueWords.toArray(new String[uniqueWords.size()]);
+					for (int i = 0; i < no_space_tokens.size(); i++) {
+						Token_info temp_token = new Token_info(no_space_tokens.get(i), urlfFilename[0], "text", i);
+						controller.AddToInvertedFile(temp_token, "Url_id", "Position", "Type");
                 	/*tokens_info[i]=new Token_info(urlfFilename[0],
                 			number_of_occurance(no_space_tokens,no_space_tokens.get(i)));*/
-                }      
-                System.out.println("after add to inverted");
+					}
+					System.out.println("after add to inverted");
                /* for (Element link : links) {
                     controller.addUrlToFrontier(normalizeLink(link.attr("abs:href")));
                 }*/
@@ -111,10 +108,10 @@ public class Indexer implements Runnable {
                     file_in2.write("\n");
                 }
                 file_in3.close();*/
-            } catch (Exception ex) {
-                System.out.println(ex);
-            }
-        }
+				} catch (Exception ex) {
+					System.out.println(ex);
+				}
+			}
 		}
 	}
 

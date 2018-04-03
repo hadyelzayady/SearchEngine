@@ -132,21 +132,19 @@ public class DBController {
     		{
     			if(!temp_doc.get("token_info").toString().contains(temp_doc0.toString()))
     			/*Bson filter5 =new Document("token_info",temp_doc0);
-    			if(Inverted_file.find(filter5)==null)*/
-    			{
-    		      Inverted_file.updateOne(filter, change);
-    			}
-    		}
-    	}
+    			if(Inverted_file.find(filter5)==null)*/ {
+                    Inverted_file.updateOne(filter, change);
+                }
+            }
+        }
     }
 
-    public boolean found_unindexed_pages()
-    {
-    	boolean found=false;
-    	 Bson filter = new Document("indexed",false);
-    	 if(visited_collection.find(filter)!=null)
-    		 found=true;
-    	 return found;
+    public boolean found_unindexed_pages() {
+        boolean found = false;
+        Bson filter = new Document("indexed", false);
+        if (visited_collection.find(filter) != null)
+            found = true;
+        return found;
     }
 
     public void deleteUrlFromSeed(String url) {
@@ -311,5 +309,11 @@ public class DBController {
 
     public void addInnLink(String url, String mylink) {
 
+    }
+
+    public void deleteInvertedFile(String link) {
+        Bson match = new BasicDBObject(); // to match your document
+        BasicDBObject update = new BasicDBObject("token_info", new BasicDBObject("Url_id", "https://pt.wikipedia.org/"));
+        Inverted_file.updateMany(match, new BasicDBObject("$pull", update));
     }
 }
