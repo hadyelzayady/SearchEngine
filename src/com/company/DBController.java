@@ -8,6 +8,7 @@ import com.mongodb.client.model.*;
 import static com.mongodb.client.model.Projections.*;
 import java.util.Iterator;
 
+import com.sun.javadoc.Doc;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.Document;
@@ -76,8 +77,18 @@ public class DBController {
     
 
     public void addUrlToVisited(String url, String checksum) {
-        Document document = new Document("_id", url).append("checksum", checksum).append("indexed", false);
-        visited_collection.insertOne(document);
+        Bson doc = new Document("_id", url);
+        Document old_visited = visited_collection.find(doc).first();
+        if (old_visited != null) {
+            String old_checksum = old_visited.getString("checksum");
+            if (!old_checksum.equals(checksum)) {
+                Document document = new Document("_id", url).append("checksum", checksum).append("indexed", false);
+                visited_collection.insertOne(document);
+            }
+        } else {
+            Document document = new Document("_id", url).append("checksum", checksum).append("indexed", false);
+            visited_collection.insertOne(document);
+        }
     }
 
     //
@@ -313,7 +324,7 @@ public class DBController {
 
     public void deleteInvertedFile(String link) {
         Bson match = new BasicDBObject(); // to match your document
-        BasicDBObject update = new BasicDBObject("token_info", new BasicDBObject("Url_id", "https://pt.wikipedia.org/"));
+        BasicDBObject update = new BasicDBObject("token_info", new BasicDBObject("Url_id", link));
         Inverted_file.updateMany(match, new BasicDBObject("$pull", update));
     }
 }
