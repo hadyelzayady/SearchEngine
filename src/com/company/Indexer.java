@@ -43,59 +43,58 @@ public class Indexer implements Runnable {
 //            System.out.println("indexer starts");
 				File input = new File("Pages/" + urlfFilename[1] + ".html");
 //            System.out.println("indexer opens file ");
-            try {
-            	   //reading useless words
-                String line;
-                Vector<String>stopping_words = new Vector(2);
-                FileReader file_out=new FileReader("stopwords_en.txt");
-                BufferedReader bf=new BufferedReader(file_out);
-                while ((line = bf.readLine()) != null) {
-    				stopping_words.add(line);
-    			}
-                bf.close();
-                file_out.close();
-
-                String file_name6 = "tokens4.txt";
-                FileWriter file_in6 = new FileWriter(file_name6);
-                for (int i=0;i<stopping_words.size();i++) {
-                    file_in6.write(stopping_words.get(i));
-                    file_in6.write("\n");
-                }
-                file_in6.close();
-
-                Document doc = Jsoup.parse(input, "UTF-8", urlfFilename[0]);
-                String body = doc.body().text();
-                String[] tokens = Tokenizer(body);
-                String[] normalized_tokens = Normalizer(tokens);
-                Vector<String> no_space_tokens=remove_spaces(normalized_tokens);
-                Elements headers = doc.select("h1,h2,h3,h4,h5,h6");
-                Vector<String> no_space_headers;
-                 String tag;
-                for(Element header:headers)
-                {
-                    tag=header.tagName().toLowerCase();
-                	String header_name=header.text();
-                	String[] header_tokens=Tokenizer(header_name);
-                	String[] normalized_headers= Normalizer(header_tokens);
-                    no_space_headers=remove_spaces(normalized_headers);
-                    no_space_headers=remove_stopping_words(no_space_headers,stopping_words);
-                    no_space_headers=remove_stopping_words(no_space_tokens,stopping_words);
-                    for(int i=0;i< no_space_headers.size();i++)
-                    {
-                      Token_info temp_token=new Token_info(no_space_headers.get(i),urlfFilename[0],tag,i);
-                      controller.AddToInvertedFile(temp_token,"Url_id","Position","Type");
-                      no_space_tokens.remove(temp_token.get_token_name());
+                try {
+                    //reading useless words
+                    String line;
+                    Vector<String> stopping_words = new Vector(2);
+                    FileReader file_out = new FileReader("stopwords_en.txt");
+                    BufferedReader bf = new BufferedReader(file_out);
+                    controller.deleteInvertedFile(urlfFilename[0]);
+                    while ((line = bf.readLine()) != null) {
+                        stopping_words.add(line);
                     }
-                }
-                //printing tokens.
-                String file_name = "tokens.txt";
-                FileWriter file_in = new FileWriter(file_name);
-                for (String normalized_token : normalized_tokens) {
-                    file_in.write(normalized_token);
-                    file_in.write("\n");
-                }
-				System.out.println("finshed indexing: " + urlfFilename[0]);
-                file_in.close();
+                    bf.close();
+                    file_out.close();
+
+                    String file_name6 = "tokens4.txt";
+                    FileWriter file_in6 = new FileWriter(file_name6);
+                    for (int i = 0; i < stopping_words.size(); i++) {
+                        file_in6.write(stopping_words.get(i));
+                        file_in6.write("\n");
+                    }
+                    file_in6.close();
+
+                    Document doc = Jsoup.parse(input, "UTF-8", urlfFilename[0]);
+                    String body = doc.body().text();
+                    String[] tokens = Tokenizer(body);
+                    String[] normalized_tokens = Normalizer(tokens);
+                    Vector<String> no_space_tokens = remove_spaces(normalized_tokens);
+                    Elements headers = doc.select("h1,h2,h3,h4,h5,h6");
+                    Vector<String> no_space_headers;
+                    String tag;
+                    for (Element header : headers) {
+                        tag = header.tagName().toLowerCase();
+                        String header_name = header.text();
+                        String[] header_tokens = Tokenizer(header_name);
+                        String[] normalized_headers = Normalizer(header_tokens);
+                        no_space_headers = remove_spaces(normalized_headers);
+                        no_space_headers = remove_stopping_words(no_space_headers, stopping_words);
+                        no_space_headers = remove_stopping_words(no_space_tokens, stopping_words);
+                        for (int i = 0; i < no_space_headers.size(); i++) {
+                            Token_info temp_token = new Token_info(no_space_headers.get(i), urlfFilename[0], tag, i);
+                            controller.AddToInvertedFile(temp_token, "Url_id", "Position", "Type");
+                            no_space_tokens.remove(temp_token.get_token_name());
+                        }
+                    }
+                    //printing tokens.
+                    String file_name = "tokens.txt";
+                    FileWriter file_in = new FileWriter(file_name);
+                    for (String normalized_token : normalized_tokens) {
+                        file_in.write(normalized_token);
+                        file_in.write("\n");
+                    }
+                    System.out.println("finshed indexing: " + urlfFilename[0]);
+                    file_in.close();
 
 					System.out.println("Hello");
 					//Set<String> uniqueWords = new HashSet<String>(Arrays.asList(normalized_tokens));
@@ -153,12 +152,11 @@ public class Indexer implements Runnable {
 		}
 		return temp;
 	}
-	
-	public Vector<String> remove_stopping_words(Vector<String>v1,Vector<String>v2)
-	{
-		v1.removeAll(v2);
-		return v1;
-	}
+
+    public Vector<String> remove_stopping_words(Vector<String> v1, Vector<String> v2) {
+        v1.removeAll(v2);
+        return v1;
+    }
 
 	public int number_of_occurance(Vector<String>arr,String token)
 	{
