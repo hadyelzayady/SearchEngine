@@ -90,7 +90,13 @@ public class WebCrawler implements Runnable {
     }
 
     private synchronized boolean isCrawlerFinished() {
-        return number_crawled.getAndAdd(1) <= crawler_limit;//todo change it later to normal integer
+        if (number_crawled.get() < crawler_limit)//todo change it later to normal integer
+        {
+            number_crawled.incrementAndGet();
+            return true;
+        }
+        return false;
+
     }
 
     private void setCrawlingPriority(String new_checksum, String old_checksum, org.bson.Document link_doc) {
