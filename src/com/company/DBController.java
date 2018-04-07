@@ -77,17 +77,22 @@ public class DBController {
     
 
     public void addUrlToVisited(String url, String checksum) {
-        Bson doc = new Document("_id", url);
-        Document old_visited = visited_collection.find(doc).first();
-        if (old_visited != null) {
-            String old_checksum = old_visited.getString("checksum");
-            if (!old_checksum.equals(checksum)) {
+        try {
+            Bson doc = new Document("_id", url);
+            Document old_visited = visited_collection.find(doc).first();
+            if (old_visited != null) {
+                String old_checksum = old_visited.getString("checksum");
+                if (!old_checksum.equals(checksum)) {
+                    System.out.println("inside inner if");
+                    Document document = new Document("_id", url).append("checksum", checksum).append("indexed", false);
+                    visited_collection.replaceOne(doc, document);
+                }
+            } else {
                 Document document = new Document("_id", url).append("checksum", checksum).append("indexed", false);
                 visited_collection.insertOne(document);
             }
-        } else {
-            Document document = new Document("_id", url).append("checksum", checksum).append("indexed", false);
-            visited_collection.insertOne(document);
+        } catch (Exception ex) {
+            System.out.println("add url to visited " + ex);
         }
     }
 
@@ -166,7 +171,7 @@ public class DBController {
 
     public synchronized void setUrlVisited(String url, String checksum) {
         Bson filter = new Document("_id", url);
-        Bson newValue = new Document("Visited", true).append("Checksum", checksum);
+        Bson newValue = new Document("Visited", true).append("checksum", checksum);
         Bson updateOperationDocument = new Document("$set", newValue);
         frontier_collection.updateOne(filter, updateOperationDocument);
     }
@@ -276,9 +281,9 @@ public class DBController {
         robots_collection.updateMany(filter, updateOperationDocument);
     }
 
-    public void setPriority(int priority, String url) {
+    public void setPriority(int priority, String url, int offset) {
         Bson filter = new Document("_id", url);
-        Bson newValue = new Document("Priority", priority);
+        Bson newValue = new Document("Priority", priority).append("offset", offset);
         Bson updateOperationDocument = new Document("$set", newValue);
         frontier_collection.updateOne(filter, updateOperationDocument);
     }
