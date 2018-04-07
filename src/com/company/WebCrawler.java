@@ -16,7 +16,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.security.MessageDigest;
 
 //as froniter is very large and we limited to 5000 somesites may not be crawled
-//todo add only changes pages to visited so indexer won't index it again
 //todo add offset to increment priority if not changed since long
 //reset robot to updated=false
 public class WebCrawler implements Runnable {
