@@ -4,21 +4,13 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.*;
-
 import static com.mongodb.client.model.Projections.*;
-import java.util.Iterator;
-
-//import com.sun.javadoc.Doc;
-import org.bson.BsonArray;
-import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import com.company.Token_info;
-import org.jsoup.nodes.Element;
 import static com.mongodb.client.model.Filters.*;
 import static com.mongodb.client.model.Updates.*;
 
-import java.util.List;
 
 public class DBController {
     MongoCollection<Document> seed_collection;
@@ -61,11 +53,7 @@ public class DBController {
 
         }
     }
-
-    private int getOffsetAndUpdate() {
-//   metadata_collection.findOneAndUpdate()
-        return 1;
-    }
+    
     public void addUrlToFrontier(String url) {
         try {
             Document document = new Document("_id", url).append("Visited", false).append("Priority", 2);//null indicated just added under work or visited
@@ -108,7 +96,6 @@ public class DBController {
 
     public void AddToInvertedFile(Token_info token,String name1,String name2,String name3)
     {
-    	//System.out.println("Hady Zyady");
     	Document document=new Document("_id",token.get_token_name());
     	Bson filter = eq("_id", token.get_token_name());
     	Document temp_doc0= new Document(name1,token.get_token_Url())
@@ -119,40 +106,24 @@ public class DBController {
     	{
     		Inverted_file.insertOne(document);
     		Inverted_file.updateOne(filter, change);
-    		System.out.println("passed");
     	}
     	else
     	{
-    		Document temp_doc = new Document();
-    		/*Bson filter2 = Filters.in("token_info",change);
-    		Bson query = Filters.elemMatch("token_info", filter2);
-    		Bson update = new org.bson.Document("$pull", filter2); 
-    		Inverted_file.updateMany(query, update);*/
-    		FindIterable<Document> docs = Inverted_file.find();
     		boolean found=false;
-    		for(Document doc:docs)
-    		{
-    			if(doc.getString("_id").equals(token.get_token_name()))
-    			{
-    				found=true;
-    				temp_doc=doc;
-    				break;
-    			}
-    		}
+    		Document check_doc=Inverted_file.find(filter).first();
+    		if(check_doc!=null)
+    			found=true;
     		if(!found)
     		{
     			Inverted_file.insertOne(document);
-    		    Inverted_file.updateOne(filter, change);
+        		Inverted_file.updateOne(filter, change);
     		}
     		else
     		{
-    			if(!temp_doc.get("token_info").toString().contains(temp_doc0.toString()))
-    			/*Bson filter5 =new Document("token_info",temp_doc0);
-    			if(Inverted_file.find(filter5)==null)*/ {
-                    Inverted_file.updateOne(filter, change);
-                }
-            }
-        }
+    			if(!check_doc.get("token_info").toString().contains(temp_doc0.toString()))
+    				 Inverted_file.updateOne(filter, change);
+    		}
+    	}
     }
 
     public boolean found_unindexed_pages() {
@@ -181,7 +152,7 @@ public class DBController {
         Bson newValue = new Document("Visited", null);
         Bson sort_doc = new Document("Priority", 1);
         Bson updateOperationDocument = new Document("$set", newValue);
-        Bson Doc = new FindOneAndUpdateOptions().getSort();
+       // Bson Doc = new FindOneAndUpdateOptions().getSort();
         Document unvisited_link = frontier_collection.findOneAndUpdate(filter, updateOperationDocument, new FindOneAndUpdateOptions().sort(sort_doc));
         if (unvisited_link != null)
             return unvisited_link;
@@ -216,12 +187,12 @@ public class DBController {
         }
     }
 
-    private void resetRobot() {
+    /*private void resetRobot() {
         Bson newValue = new Document("Updated", false);
         Bson filter = new Document();
         Bson updateOperationDocument = new Document("$set", newValue);
         robots_collection.updateMany(filter, updateOperationDocument);
-    }
+    }*/
 
     public String[] getUnIndexedPageUrlFilenameAndSet() {
         Bson newValue = new Document("indexed", true);
