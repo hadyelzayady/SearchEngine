@@ -176,11 +176,11 @@ public class WebCrawler implements Runnable {
             writer.write(page_string);
             writer.close();
         } catch (IOException ex) {
-            if (writer != null) {
-                writer.close();
-            }
+            if (writer != null) writer.close();
+
         }
     }
+
 
     private String toHexString(byte[] bytes) {
         StringBuilder sb = new StringBuilder();
