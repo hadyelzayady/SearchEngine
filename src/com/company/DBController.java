@@ -65,6 +65,7 @@ public class DBController {
     }
 
 
+
     
     public void addUrlToFrontier(String url) {
         try {
