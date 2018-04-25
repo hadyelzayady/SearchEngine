@@ -7,9 +7,11 @@ import org.jsoup.select.Elements;
 import java.io.*;
 import java.util.Vector;
 
-
-
-//todo remove 'a','an', spaces ,tabs
+//todo threads
+//todo stemming
+//todo new collection  for stopping words
+//todo remove headers from body
+//todo inverted file part 2
 public class Indexer implements Runnable {
 	private DBController controller = DBController.ContollerInit();
 	public String normalizeLink(String url)

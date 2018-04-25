@@ -32,7 +32,7 @@ public class DBController {
         linkdatabase_collection = ConnectToDB.linkdatabase_collection;
 
         Inverted_file =  ConnectToDB.Inverted_file;
-//        addUrlToSeed("https://www.wikipedia.org/");
+        addUrlToSeed("https://www.wikipedia.org/");
 
         robots_collection = ConnectToDB.robots_collection;
     }

@@ -28,7 +28,7 @@
     <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
-          <root url="jar://E:/MyJavaDepend/mongodb-driver-3.6.3.jar!/" />
+          <root url="jar://E:/MyJavaDepend/mongodb-driver-async-3.0.4.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

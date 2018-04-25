@@ -17,6 +17,7 @@ import java.security.MessageDigest;
 
 //as froniter is very large and we limited to 5000 somesites may not be crawled
 //todo add offset to increment priority if not changed since long
+//todo domain restriction
 //reset robot to updated=false
 public class WebCrawler implements Runnable {
 
@@ -26,7 +27,7 @@ public class WebCrawler implements Runnable {
     private DBController controller;
     private final int crawler_limit = 30;
     private static final AtomicLong number_crawled = new AtomicLong(0);
-    final private int lowest_priority = 5;
+    final private int lowest_priority = 50;
 
     WebCrawler() {
         controller = DBController.ContollerInit();
@@ -64,15 +65,14 @@ public class WebCrawler implements Runnable {
                         Document page = Jsoup.connect(link).get();
                         String page_content = page.outerHtml();
                         String checksum = toHexString(calcChecksum(page_content));
-                        System.out.println(Thread.currentThread().getName());
+//                        System.out.println(Thread.currentThread().getName());
                         if (!isPageDownloadedBefore(checksum)) {
                             System.out.println(number_crawled);
                             savePageInFile(checksum, page_content);
                             setCrawlingPriority(checksum, link_checksum, link_doc);
                             addLinksToFrontier(link, page);
-                            addUrlToVisited(link, checksum);
+                            new Thread(new AsyncaddUrlToVisited(link, checksum,controller)).start();
                             controller.setUrlVisited(link, checksum);
-                            System.out.println("iter" + iter + " finished crawling " + link);
                         }
                     } else {
                         controller.deleteUrlFromFrontier(link);
@@ -151,9 +151,9 @@ public class WebCrawler implements Runnable {
     }
 
 
-    private void addUrlToVisited(String url, String checksum) {
-        controller.addUrlToVisited(url, checksum);
-    }
+//    private void addUrlToVisited(String url, String checksum) {
+//        controller.addUrlToVisited(url, checksum);
+//    }
 
     public boolean isPageHtml(String url) {
         try {
