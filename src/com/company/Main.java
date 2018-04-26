@@ -7,6 +7,8 @@ import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Main {
 
@@ -15,8 +17,18 @@ public class Main {
 		Scanner scanner = new Scanner(System.in);
 		System.out.print("number of Threads: \n");
 		int num_of_threads = scanner.nextInt();
-//        System.out.print("Search: ");
-//		String url="https://docs.oracle.com:443/javase/7/docs/api/java/net/URI.html?q=hebody";
+//		Pattern pattern = Pattern.compile("(https?://)([^:^/]*)(:\\d*)?(.*)?");
+//		String url="https://docs.oracle.com/javase/7/docs/api/j ava/net/URI.html?q=h%20ebody";
+//		Matcher matcher = pattern.matcher(url);
+//		matcher.find();
+//		String host=matcher.group(2);
+//		String port     = matcher.group(3);
+//		String protocol = matcher.group(1);
+//		String path=matcher.group(4);
+//		String uri = matcher.group(4);
+//		String x=protocol+port+host+path;
+//		port.isEmpty();
+		//        System.out.print("Search: ");
 //		String encoded_url=URLEncoder.encode(url, "UTF-8");
 //		URI uri=new URI(url);
 //		URI path= uri.relativize(new URI(uri.getPath()));

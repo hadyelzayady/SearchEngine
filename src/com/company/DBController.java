@@ -1,12 +1,16 @@
 package com.company;
 
 import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
+import com.mongodb.Mongo;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.*;
 import static com.mongodb.client.model.Projections.*;
 
+import org.springframework.data.mongodb.core.aggregation.LookupOperation;
 import com.mongodb.connection.QueryResult;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -19,6 +23,7 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class DBController {
     MongoCollection<Document> seed_collection;
@@ -31,6 +36,7 @@ public class DBController {
     MongoCollection<Document> robots_collection;
     MongoCollection<Document> linkdatabase_collection;
     MongoCollection<Document> queryResult_collection;
+	MongoCollection<Document> domain_collection;
 
     private DBController() {
         ConnectToDB.DBinit();
@@ -39,6 +45,7 @@ public class DBController {
         frontier_collection = ConnectToDB.frontier_collection;
         metadata_collection = ConnectToDB.metadata_collection;
         linkdatabase_collection = ConnectToDB.linkdatabase_collection;
+	    domain_collection = ConnectToDB.domain_collection;
 
         Inverted_file =  ConnectToDB.Inverted_file;
        //addUrlToSeed("https://www.wikipedia.org/");
@@ -168,7 +175,7 @@ public class DBController {
         Bson sort_doc = new Document("Priority", 1);
         Bson updateOperationDocument = new Document("$set", newValue);
        // Bson Doc = new FindOneAndUpdateOptions().getSort();
-        Document unvisited_link = frontier_collection.findOneAndUpdate(filter, updateOperationDocument, new FindOneAndUpdateOptions().sort(sort_doc));
+	    Document unvisited_link = frontier_collection.findOneAndUpdate(filter, updateOperationDocument, new FindOneAndUpdateOptions().sort(sort_doc));
         if (unvisited_link != null)
             return unvisited_link;
         return null;
@@ -336,6 +343,23 @@ public class DBController {
 		} catch (Exception e) {
 
 		}
+	}
+
+	public void addManyDomain(ArrayList<Document> domain_links) {
+		try {
+
+			//ordered = false to continue inserting rest of docs if duplicate key exception happens
+			domain_collection.insertMany(domain_links, new InsertManyOptions().ordered(false));//TODO use async driver in insertion and update
+		} catch (Exception e) {
+
+		}
+	}
+
+	public void incDomainPriority(String domain) {
+		Bson filter = new Document("Domain", domain);
+		Bson newValue = new Document("Domain_Constraint", 1);
+		Bson updateOperationDocument = new Document("$inc", newValue);
+		domain_collection.updateOne(filter, updateOperationDocument);
 	}
 
    /* public Document findInQueryFile(String s) {

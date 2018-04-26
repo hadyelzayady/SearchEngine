@@ -15,10 +15,12 @@ import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.security.MessageDigest;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 //as froniter is very large and we limited to 5000 somesites may not be crawled
 //todo domain restriction
+//todo link_db
 //TODO  password forget is chnaged every time as different token is assigned
 public class WebCrawler implements Runnable {
 
@@ -26,7 +28,7 @@ public class WebCrawler implements Runnable {
     private final int crawler_limit = 30;
     private static final AtomicLong number_crawled = new AtomicLong(0);
     final private int lowest_priority = 50;
-
+	private static final Pattern url_pattern = Pattern.compile("(https?://)([^:^/]*)(:\\d*)?(.*)?");
     WebCrawler() {
         controller = DBController.ContollerInit();
         long visited_count = controller.getVisitedCount();
@@ -69,7 +71,14 @@ public class WebCrawler implements Runnable {
                             savePageInFile(checksum, page_content);
                             setCrawlingPriority(checksum, link_checksum, link_doc);
                             addLinksToFrontier(link, page);
-                            new Thread(new AsyncaddUrlToVisited(link, checksum,controller)).start();
+	                        //todo calc link parts once and send them as param  then delete this
+	                        Matcher matcher = url_pattern.matcher(link);
+	                        matcher.find();
+	                        String host = matcher.group(2);
+	                        String protocol = matcher.group(1);
+	                        //
+	                        incDomainConstraint(host);
+	                        new Thread(new AsyncaddUrlToVisited(link, checksum, controller)).start();
                             controller.setUrlVisited(link, checksum);
                         }
                     } else {
@@ -87,7 +96,11 @@ public class WebCrawler implements Runnable {
 
     }
 
-    private synchronized boolean isCrawlerFinished() {
+	private void incDomainConstraint(String domain) {
+		controller.incDomainPriority(domain);
+	}
+
+	private synchronized boolean isCrawlerFinished() {
         if (number_crawled.get() < crawler_limit)//todo change it later to normal integer
         {
             number_crawled.incrementAndGet();
@@ -123,13 +136,23 @@ public class WebCrawler implements Runnable {
         Elements links = page.select("a[href]");
         controller.linkdbAddOutLinks(url, links.size());
 		ArrayList<org.bson.Document> frontier_links = new ArrayList<>();
+		ArrayList<org.bson.Document> domain_links = new ArrayList<>();
 		for (Element link : links) {
             String norm_link = normalizeLink(link.attr("abs:href"));
-			org.bson.Document document = new org.bson.Document("_id", norm_link).append("Visited", false).append("Priority", 2);
-			frontier_links.add(document);
+			Matcher matcher = url_pattern.matcher(url);
+			if (matcher.find()) {
+				String domain = matcher.group(2);//protocol + domain as in join with frontier we can join
+				org.bson.Document document = new org.bson.Document("_id", norm_link).append("Visited", false).append("Priority", 2).append("Domain_FK", domain);
+				org.bson.Document domain_doc = new org.bson.Document("Domain", domain).append("Domain_Constraint", 0);
+				frontier_links.add(document);
+				domain_links.add(domain_doc);
+//				org.bson.Document linkdb_document = new org.bson.Document("_id", norm_link).append("Visited", false).append("Priority", 2);
+			}
+			//link db
 //            controller.addInnLink(url, norm_link);
         }
 		controller.addManyUrlToFrontier(frontier_links);
+		controller.addManyDomain(domain_links);
     }
 
     private String normalizeLink(String url) {
@@ -193,20 +216,20 @@ public class WebCrawler implements Runnable {
 
     private boolean isPageAllowedToCrawl(String url) {
         try {
-	        //get host path
-	        String[] url_query = url.split("\\?");
-	        String encodedqury = "";
-	        if (url_query.length == 2) {
-		        encodedqury = URLEncoder.encode(url_query[1], "UTF-8");
-	        }
-	        URI link = new URI(url_query[0]);
-	        String path = link.getPath() + encodedqury;
-	        String host = link.getHost();
+	        Matcher matcher = url_pattern.matcher(url);
+	        matcher.find();
+	        String host = matcher.group(2);
+	        String path = matcher.group(4);
 	        org.bson.Document robot_doc = controller.getRobot(host);
             if (robot_doc != null && robot_doc.getBoolean("updated")) {
 
                 return isPathAllowedInRobot(path, robot_doc);
             } else {
+	            String protocol = matcher.group(1);
+	            String port = matcher.group(3);
+	            if (port == null)
+		            port = "";
+	            String link = protocol + port + host + "/robots.txt";
 	            String text = downloadRobot(link);
                 String checksum = toHexString(calcChecksum(text));
                 if (robot_doc != null && checksum.equals(robot_doc.getString("checksum"))) {
@@ -223,12 +246,9 @@ public class WebCrawler implements Runnable {
         return true;
     }
 
-	private String downloadRobot(URI uri) {
+	private String downloadRobot(String robot_link) {
         try {
-
-	        System.out.println("dwonload robot ");
-	        String base_url = uri.getScheme() + "://" + uri.getHost();
-	        Document doc = Jsoup.parse(new URL(base_url + "/robots.txt").openStream(), "UTF-8", base_url);
+	        Document doc = Jsoup.parse(new URL(robot_link).openStream(), "UTF-8", "");
             return doc.text();
         } catch (Exception ex) {
 	        System.out.println("download robot " + ex);

@@ -5,6 +5,8 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 
 
+import com.mongodb.client.model.IndexOptions;
+import com.mongodb.client.model.Indexes;
 import org.bson.Document;
 
 public class ConnectToDB {
@@ -16,6 +18,7 @@ public class ConnectToDB {
     public static MongoCollection<Document> robots_collection;
     public static MongoCollection<Document> linkdatabase_collection;
     public static MongoCollection<Document> queryResult_collection;
+	public static MongoCollection<Document> domain_collection;
 
     public static void DBinit() {
 
@@ -29,10 +32,17 @@ public class ConnectToDB {
         // Retieving a collection
 //            database.getCollection("Seed").drop();
             seed_collection = database.getCollection("Seed");
-
 //        database.getCollection("Frontier").drop();
         frontier_collection = database.getCollection("Frontier");
+	    frontier_collection.createIndex(Indexes.ascending("Priority"));
+
+	    //
+
         linkdatabase_collection = database.getCollection("Link_db");
+	    domain_collection = database.getCollection("Domain");
+	    domain_collection.createIndex(Indexes.text("Domain"), new IndexOptions().unique(true));
+	    Document index = new Document("link1", "").append("link2", "");
+	    linkdatabase_collection.createIndex(Indexes.compoundIndex(Indexes.text("link1"), Indexes.text("link2")), new IndexOptions().unique(true));
             database.getCollection("Visited").drop();
             visited_collection = database.getCollection("Visited");
         metadata_collection = database.getCollection("Metadata");
