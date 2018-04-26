@@ -234,7 +234,7 @@ public class DBController {
         return false;
     }
 
-    public Document getRobot(String home_url, String url) {
+	public Document getRobot(String home_url) {
         BasicDBObject query = new BasicDBObject("_id", home_url);
 //        Document url_doc = robots_collection.find(query).filter(Filters.elemMatch("allow", Filters.regex("url", url))).first();
         Document url_doc = robots_collection.find(query).projection(exclude("_id")).first();
@@ -268,7 +268,7 @@ public class DBController {
 
     public void setPriority(int priority, String url, int offset) {
         Bson filter = new Document("_id", url);
-        Bson newValue = new Document("Priority", priority).append("offset", offset);
+	    Bson newValue = new Document("Priority", priority).append("Offset", offset);
         Bson updateOperationDocument = new Document("$set", newValue);
         frontier_collection.updateOne(filter, updateOperationDocument);
     }

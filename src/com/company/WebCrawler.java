@@ -9,21 +9,19 @@ import java.io.*;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.security.MessageDigest;
+import java.util.regex.Pattern;
 
 //as froniter is very large and we limited to 5000 somesites may not be crawled
-//todo add offset to increment priority if not changed since long
 //todo domain restriction
-//reset robot to updated=false
+//TODO  password forget is chnaged every time as different token is assigned
 public class WebCrawler implements Runnable {
 
-    /**
-     *
-     */
     private DBController controller;
     private final int crawler_limit = 30;
     private static final AtomicLong number_crawled = new AtomicLong(0);
@@ -67,7 +65,7 @@ public class WebCrawler implements Runnable {
                         String checksum = toHexString(calcChecksum(page_content));
 //                        System.out.println(Thread.currentThread().getName());
                         if (!isPageDownloadedBefore(checksum)) {
-                            System.out.println(number_crawled);
+	                        System.out.println("number_crawled " + number_crawled);
                             savePageInFile(checksum, page_content);
                             setCrawlingPriority(checksum, link_checksum, link_doc);
                             addLinksToFrontier(link, page);
@@ -106,7 +104,7 @@ public class WebCrawler implements Runnable {
             return;
         }
         int link_priority = link_doc.getInteger("Priority");
-        int link_offset = link_doc.getInteger("offset");
+	    int link_offset = link_doc.getInteger("Offset");
         boolean notchanged = new_checksum.equals(old_checksum);
         if (notchanged)//not change --> lower priority (higher number is lower priority:1 is highest priority and 5 is lowest
         {
@@ -121,7 +119,7 @@ public class WebCrawler implements Runnable {
         }
     }
 
-    private void addLinksToFrontier(String url, Document page) {
+	private void addLinksToFrontier(String url, Document page) throws UnsupportedEncodingException {
         Elements links = page.select("a[href]");
         controller.linkdbAddOutLinks(url, links.size());
         for (Element link : links) {//todo try to use insertmany insteadof insert one by one
@@ -192,15 +190,21 @@ public class WebCrawler implements Runnable {
 
     private boolean isPageAllowedToCrawl(String url) {
         try {
-            URI uri = new URI(url);
-            String host = uri.getHost();
-            String path = uri.getPath();
-            org.bson.Document robot_doc = controller.getRobot(host, path);
+	        //get host path
+	        String[] url_query = url.split("\\?");
+	        String encodedqury = "";
+	        if (url_query.length == 2) {
+		        encodedqury = URLEncoder.encode(url_query[1], "UTF-8");
+	        }
+	        URI link = new URI(url_query[0]);
+	        String path = link.getPath() + encodedqury;
+	        String host = link.getHost();
+	        org.bson.Document robot_doc = controller.getRobot(host);
             if (robot_doc != null && robot_doc.getBoolean("updated")) {
 
                 return isPathAllowedInRobot(path, robot_doc);
             } else {
-                String text = downloadRobot(uri, url);
+	            String text = downloadRobot(link);
                 String checksum = toHexString(calcChecksum(text));
                 if (robot_doc != null && checksum.equals(robot_doc.getString("checksum"))) {
                     controller.setRobotUpdated(host);
@@ -216,12 +220,15 @@ public class WebCrawler implements Runnable {
         return true;
     }
 
-    private String downloadRobot(URI uri, String url) {
+	private String downloadRobot(URI uri) {
         try {
-            Document doc = Jsoup.parse(new URL(uri.getScheme() + "://" + uri.getHost() + "/robots.txt").openStream(), "UTF-8", url);
+
+	        System.out.println("dwonload robot ");
+	        String base_url = uri.getScheme() + "://" + uri.getHost();
+	        Document doc = Jsoup.parse(new URL(base_url + "/robots.txt").openStream(), "UTF-8", base_url);
             return doc.text();
         } catch (Exception ex) {
-            System.out.println(ex);
+	        System.out.println("download robot " + ex);
             return "";
         }
 
