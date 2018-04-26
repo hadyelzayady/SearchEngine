@@ -1,6 +1,7 @@
 package com.company;
 
 import com.mongodb.BasicDBObject;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.*;
@@ -17,6 +18,7 @@ import com.mongodb.client.MongoCursor;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class DBController {
     MongoCollection<Document> seed_collection;
@@ -325,6 +327,16 @@ public class DBController {
         Document doc = Inverted_file.find(filter).first();
         return doc;
     }
+
+	public void addManyUrlToFrontier(ArrayList<Document> frontier_links) {
+		try {
+
+			//ordered = false to continue inserting rest of docs if duplicate key exception happens
+			frontier_collection.insertMany(frontier_links, new InsertManyOptions().ordered(false));//TODO use async driver in insertion and update
+		} catch (Exception e) {
+
+		}
+	}
 
    /* public Document findInQueryFile(String s) {
         Bson filter = eq("_id", s);

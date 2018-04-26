@@ -122,11 +122,14 @@ public class WebCrawler implements Runnable {
 	private void addLinksToFrontier(String url, Document page) throws UnsupportedEncodingException {
         Elements links = page.select("a[href]");
         controller.linkdbAddOutLinks(url, links.size());
-        for (Element link : links) {//todo try to use insertmany insteadof insert one by one
+		ArrayList<org.bson.Document> frontier_links = new ArrayList<>();
+		for (Element link : links) {
             String norm_link = normalizeLink(link.attr("abs:href"));
-            controller.addUrlToFrontier(norm_link);
-            controller.addInnLink(url, norm_link);
+			org.bson.Document document = new org.bson.Document("_id", norm_link).append("Visited", false).append("Priority", 2);
+			frontier_links.add(document);
+//            controller.addInnLink(url, norm_link);
         }
+		controller.addManyUrlToFrontier(frontier_links);
     }
 
     private String normalizeLink(String url) {
