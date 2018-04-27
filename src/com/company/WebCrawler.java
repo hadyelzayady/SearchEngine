@@ -13,6 +13,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.security.MessageDigest;
 import java.util.regex.Matcher;
@@ -27,24 +28,37 @@ public class WebCrawler implements Runnable {
     private DBController controller;
     private final int crawler_limit = 30;
     private static final AtomicLong number_crawled = new AtomicLong(0);
+	private static final AtomicInteger next = new AtomicInteger(0);
     final private int lowest_priority = 50;
-	private static final Pattern url_pattern = Pattern.compile("(https?://)([^:^/]*)(:\\d*)?(.*)?");
+	private static final Pattern url_pattern = Pattern.compile("(https?://)([^:^/^?]*)(:\\d*)?(.*)?");
+	private ArrayList<org.bson.Document> arr1 = new ArrayList<>();
+	private ArrayList<org.bson.Document> arr2 = new ArrayList<>();
+	private ArrayList<org.bson.Document> working_arr = arr1;
+	private ArrayList<org.bson.Document> empty_arr = arr2;
     WebCrawler() {
         controller = DBController.ContollerInit();
         long visited_count = controller.getVisitedCount();
-        if (0 < visited_count && visited_count < crawler_limit)//interrupt happened
+	    if (0 < visited_count && visited_count < crawler_limit)//interrupt happened
         {
             controller.setWorkOnPagesToUnVisited();
             number_crawled.set(visited_count);
         } else {
             controller.resetFrontier();
             controller.resetRobotStatus();
-//            controller.resetVisited();
+		    controller.resetVisited();
             number_crawled.set(0);
         }
+	    arrayInit();
     }
 
-    int iter = 1;
+	private void arrayInit() {
+		arr1 = controller.getLinksFromFrontier();
+		arr2 = controller.getLinksFromFrontier();
+		working_arr = arr1;
+		empty_arr = arr2;
+	}
+
+	int iter = 1;
     public void recrawlreset() {
         iter++;
         controller.resetFrontier();
@@ -56,7 +70,8 @@ public class WebCrawler implements Runnable {
 
         while (isCrawlerFinished())// && link!=null
         {
-            org.bson.Document link_doc = controller.getLinkFromFrontierAndSetOnwork();
+	        org.bson.Document link_doc = getNextLinkToCrawl();
+
             if (link_doc != null) {
                 String link = link_doc.getString("_id");
                 String link_checksum = link_doc.getString("checksum");
@@ -67,7 +82,7 @@ public class WebCrawler implements Runnable {
                         String checksum = toHexString(calcChecksum(page_content));
 //                        System.out.println(Thread.currentThread().getName());
                         if (!isPageDownloadedBefore(checksum)) {
-	                        System.out.println("number_crawled " + number_crawled);
+	                        System.out.println("number_crawled " + number_crawled + "  " + link);
                             savePageInFile(checksum, page_content);
                             setCrawlingPriority(checksum, link_checksum, link_doc);
                             addLinksToFrontier(link, page);
@@ -75,7 +90,7 @@ public class WebCrawler implements Runnable {
 	                        Matcher matcher = url_pattern.matcher(link);
 	                        matcher.find();
 	                        String host = matcher.group(2);
-	                        String protocol = matcher.group(1);
+//	                        String protocol = matcher.group(1);
 	                        //
 	                        incDomainConstraint(host);
 	                        new Thread(new AsyncaddUrlToVisited(link, checksum, controller)).start();
@@ -95,6 +110,28 @@ public class WebCrawler implements Runnable {
 
 
     }
+
+	private org.bson.Document getNextLinkToCrawl() {
+		synchronized (working_arr) {
+			if (working_arr.isEmpty()) {
+				//swap
+				ArrayList<org.bson.Document> temp = working_arr;
+				working_arr = empty_arr;
+				empty_arr = temp;
+				next.set(0);
+				//
+				//todo possbile bug ,if two arrays are empty multiple threads will fill the arrays which will get the same urls.possible solu initialize the arrays
+			} else {
+				return working_arr.remove(0);
+			}
+		}
+		fillEmptyArray();
+		return null;
+	}
+
+	private void fillEmptyArray() {
+		empty_arr = controller.getLinksFromFrontier();
+	}
 
 	private void incDomainConstraint(String domain) {
 		controller.incDomainPriority(domain);
@@ -125,7 +162,7 @@ public class WebCrawler implements Runnable {
                 link_offset++;
             controller.setPriority(link_offset, link, link_offset);//lower
         } else if (!notchanged) {
-            System.out.println("changed page" + link);
+	        // System.out.println("changed page" + link);
             if (link_offset > 2)
                 --link_offset;
             controller.setPriority(link_offset, link, link_offset);//lower

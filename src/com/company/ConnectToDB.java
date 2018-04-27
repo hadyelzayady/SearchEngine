@@ -40,7 +40,8 @@ public class ConnectToDB {
 
         linkdatabase_collection = database.getCollection("Link_db");
 	    domain_collection = database.getCollection("Domain");
-	    domain_collection.createIndex(Indexes.text("Domain"), new IndexOptions().unique(true));
+	    domain_collection.createIndex(Indexes.ascending("Domain"), new IndexOptions().unique(true));
+	    domain_collection.createIndex(Indexes.ascending("Domain_Constraint"));
 	    Document index = new Document("link1", "").append("link2", "");
 	    linkdatabase_collection.createIndex(Indexes.compoundIndex(Indexes.text("link1"), Indexes.text("link2")), new IndexOptions().unique(true));
             database.getCollection("Visited").drop();

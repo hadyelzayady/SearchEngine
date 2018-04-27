@@ -10,6 +10,10 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.*;
 import static com.mongodb.client.model.Projections.*;
 
+import com.mongodb.util.JSON;
+import org.springframework.data.mongodb.core.aggregation.AggregationOperation;
+import org.springframework.data.mongodb.core.aggregation.AggregationOptions;
+import org.springframework.data.mongodb.core.aggregation.AggregationResults;
 import org.springframework.data.mongodb.core.aggregation.LookupOperation;
 import com.mongodb.connection.QueryResult;
 import org.bson.Document;
@@ -19,9 +23,11 @@ import static com.mongodb.client.model.Filters.*;
 import static com.mongodb.client.model.Updates.*;
 import com.mongodb.client.MongoCursor;
 
+import javax.print.Doc;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -49,9 +55,9 @@ public class DBController {
 
         Inverted_file =  ConnectToDB.Inverted_file;
        //addUrlToSeed("https://www.wikipedia.org/");
-        addUrlToSeed("https://www.theguardian.com/international");
-        addUrlToSeed("http://www.bbc.com/news");
-        addUrlToSeed("https://www.history.com/");
+	    //addUrlToSeed("https://www.theguardian.com/international");
+//        addUrlToSeed("http://www.bbc.com/news");
+//        addUrlToSeed("https://www.history.com/");
         robots_collection = ConnectToDB.robots_collection;
         queryResult_collection = ConnectToDB.queryResult_collection;
     }
@@ -93,7 +99,7 @@ public class DBController {
             if (old_visited != null) {
                 String old_checksum = old_visited.getString("checksum");
                 if (!old_checksum.equals(checksum)) {
-                    System.out.println("inside inner if");
+	                // System.out.println("inside inner if");
                     Document document = new Document("_id", url).append("checksum", checksum).append("indexed", false);
                     visited_collection.replaceOne(doc, document);
                 }
@@ -174,13 +180,43 @@ public class DBController {
         Bson newValue = new Document("Visited", null);
         Bson sort_doc = new Document("Priority", 1);
         Bson updateOperationDocument = new Document("$set", newValue);
-       // Bson Doc = new FindOneAndUpdateOptions().getSort();
+
+	    AggregateIterable<Document> h = frontier_collection.aggregate(Arrays.asList(
+			    Aggregates.sort(new Document("Priority", 1)),
+			    Aggregates.lookup("Domain", "Domain_FK", "Domain", "mydomain"),
+			    Aggregates.sort(new Document("mydomain.Domain_Constraint", 1)),
+			    Aggregates.group("$Domain_FK"),
+			    Aggregates.limit(50)
+	    ));
+//	    Aggregates.group("Domain_FK")
+//	    Aggregates.match(Filters.ne("mydomain.Domain_Constraint",4))
+	    for (Document doc : h) {
+		    System.out.println(doc.toJson());
+	    }
 	    Document unvisited_link = frontier_collection.findOneAndUpdate(filter, updateOperationDocument, new FindOneAndUpdateOptions().sort(sort_doc));
         if (unvisited_link != null)
             return unvisited_link;
         return null;
     }
 
+	public ArrayList<Document> getLinksFromFrontier() {
+		ArrayList<Document> links_arr = new ArrayList<>();
+		AggregateIterable<Document> links_it = frontier_collection.aggregate(Arrays.asList(
+				Aggregates.lookup("Domain", "Domain_FK", "Domain", "mydomain"),
+				Aggregates.sort(new Document("Priority", 1).append("mydomain.Domain_Constraint", 1)),
+				Aggregates.match(Filters.and(Filters.lte("mydomain.Domain_Constraint", 1000), Filters.eq("Visited", false))),
+				Aggregates.limit(50)
+		));
+		//set links to onwork(null)
+		Bson newValue = new Document("Visited", null);
+		Bson updateOperationDocument = new Document("$set", newValue);
+		for (Document doc : links_it) {
+			links_arr.add(doc);
+			Bson filter = new Document("_id", doc.getString("_id"));
+			frontier_collection.updateOne(filter, updateOperationDocument);
+		}
+		return links_arr;
+	}
     public void removeLink(String url) {
         BasicDBObject document = new BasicDBObject();
         document.put("_id", url);
@@ -191,10 +227,16 @@ public class DBController {
         if (frontier_collection.count() == 0) {
             BasicDBObject document = new BasicDBObject();
             frontier_collection.deleteMany(document);
-            for (Document doc : seed_collection.find()) {
-                doc.append("Priority", 1);
-                doc.append("Offset", 0);
-                frontier_collection.insertOne(doc);
+	        domain_collection.deleteMany(document);
+	        //todo use aggregate
+	        FindIterable<Document> docs = seed_collection.find();
+	        for (Document doc : docs) {
+		        Document link_doc = doc;
+		        link_doc.append("Priority", 1);
+		        link_doc.append("Offset", 0).append("Domain_FK", doc.getString("Domain_FK"));
+		        Document domain_doc = new Document("Domain", doc.getString("Domain_FK")).append("Domain_Constraint", 0);
+		        frontier_collection.insertOne(link_doc);
+		        domain_collection.insertOne(domain_doc);
             }
         } else {
             //dec priority of not visited pages in last crawler
@@ -207,6 +249,11 @@ public class DBController {
             Bson filter2 = new Document();
             Bson updateOperationDocument2 = new Document("$set", visited_newValue);
             frontier_collection.updateMany(filter2, updateOperationDocument2);
+	        //reset domain constraint
+	        newValue = new Document("Domain_Constraint", -1);
+	        filter = new Document("Domain_Constraint", new Document("$gt", 1));
+	        updateOperationDocument2 = new Document("$inc", newValue);
+	        domain_collection.updateMany(filter, updateOperationDocument2);
         }
     }
 

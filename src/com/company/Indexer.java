@@ -41,7 +41,7 @@ public class Indexer implements Runnable {
     				if (urlfFilename == null) {
     					continue;
     				}
-    				System.out.println("indexing: " + urlfFilename[0]);
+		            //System.out.println("indexing: " + urlfFilename[0]);
     				File input = new File("Pages/" + urlfFilename[1] + ".html");
                         controller.deleteInvertedFile(urlfFilename[0]);
                         Document doc = Jsoup.parse(input, "UTF-8", urlfFilename[0]);
@@ -62,12 +62,12 @@ public class Indexer implements Runnable {
                                 no_space_tokens.remove(temp_token.get_token_name());
                             }
                         }
-                        System.out.println("finshed indexing: " + urlfFilename[0]);
+		            // System.out.println("finshed indexing: " + urlfFilename[0]);
     					for (int i = 0; i < no_space_tokens.size(); i++) {
     						Token_info temp_token = new Token_info(no_space_tokens.get(i), urlfFilename[0], "text", i);
     						controller.AddToInvertedFile(temp_token, "Url_id", "Position", "Type");
     					}
-    					System.out.println("after add to inverted");
+		            //System.out.println("after add to inverted");
             	}
             }
 		}
