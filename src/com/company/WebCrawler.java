@@ -26,10 +26,10 @@ import java.util.regex.Pattern;
 public class WebCrawler implements Runnable {
 
     private DBController controller;
-    private final int crawler_limit = 30;
+	private final int crawler_limit = 10;
     private static final AtomicLong number_crawled = new AtomicLong(0);
 	private static final AtomicInteger next = new AtomicInteger(0);
-    final private int lowest_priority = 50;
+	final private int lowest_priority = 100;
 	private static final Pattern url_pattern = Pattern.compile("(https?://)([^:^/^?]*)(:\\d*)?(.*)?");
 	private ArrayList<org.bson.Document> arr1 = new ArrayList<>();
 	private ArrayList<org.bson.Document> arr2 = new ArrayList<>();
@@ -71,9 +71,8 @@ public class WebCrawler implements Runnable {
         while (isCrawlerFinished())// && link!=null
         {
 	        org.bson.Document link_doc = getNextLinkToCrawl();
-
             if (link_doc != null) {
-                String link = link_doc.getString("_id");
+	            String link = link_doc.getString("url");
                 String link_checksum = link_doc.getString("checksum");
                 try {
                     if (isPageAllowedToCrawl(link)) {
@@ -148,7 +147,7 @@ public class WebCrawler implements Runnable {
     }
 
     private void setCrawlingPriority(String new_checksum, String old_checksum, org.bson.Document link_doc) {
-        String link = link_doc.getString("_id");
+	    String link = link_doc.getString("url");
         if (!link_doc.containsKey("Priority") || old_checksum == null) {
             controller.setPriority(2, link, 2);
             return;
@@ -254,7 +253,9 @@ public class WebCrawler implements Runnable {
     private boolean isPageAllowedToCrawl(String url) {
         try {
 	        Matcher matcher = url_pattern.matcher(url);
-	        matcher.find();
+	        if (!matcher.find()) {
+
+	        }
 	        String host = matcher.group(2);
 	        String path = matcher.group(4);
 	        org.bson.Document robot_doc = controller.getRobot(host);

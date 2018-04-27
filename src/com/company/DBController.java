@@ -175,37 +175,38 @@ public class DBController {
         frontier_collection.updateOne(filter, updateOperationDocument);
     }
 
-    public synchronized Document getLinkFromFrontierAndSetOnwork() {
-        Bson filter = new Document("Visited", false);
-        Bson newValue = new Document("Visited", null);
-        Bson sort_doc = new Document("Priority", 1);
-        Bson updateOperationDocument = new Document("$set", newValue);
-
-	    AggregateIterable<Document> h = frontier_collection.aggregate(Arrays.asList(
-			    Aggregates.sort(new Document("Priority", 1)),
-			    Aggregates.lookup("Domain", "Domain_FK", "Domain", "mydomain"),
-			    Aggregates.sort(new Document("mydomain.Domain_Constraint", 1)),
-			    Aggregates.group("$Domain_FK"),
-			    Aggregates.limit(50)
-	    ));
-//	    Aggregates.group("Domain_FK")
-//	    Aggregates.match(Filters.ne("mydomain.Domain_Constraint",4))
-	    for (Document doc : h) {
-		    System.out.println(doc.toJson());
-	    }
-	    Document unvisited_link = frontier_collection.findOneAndUpdate(filter, updateOperationDocument, new FindOneAndUpdateOptions().sort(sort_doc));
-        if (unvisited_link != null)
-            return unvisited_link;
-        return null;
-    }
+//    public synchronized Document getLinkFromFrontierAndSetOnwork() {
+//        Bson filter = new Document("Visited", false);
+//        Bson newValue = new Document("Visited", null);
+//        Bson sort_doc = new Document("Priority", 1);
+//        Bson updateOperationDocument = new Document("$set", newValue);
+//
+//	    AggregateIterable<Document> h = frontier_collection.aggregate(Arrays.asList(
+//			    Aggregates.sort(new Document("Priority", 1)),
+//			    Aggregates.lookup("Domain", "Domain_FK", "Domain", "mydomain"),
+//			    Aggregates.sort(new Document("mydomain.Domain_Constraint", 1)),
+//			    Aggregates.group("$Domain_FK"),
+//			    Aggregates.limit(100)
+//	    ));
+////	    Aggregates.group("Domain_FK")
+////	    Aggregates.match(Filters.ne("mydomain.Domain_Constraint",4))
+//	    for (Document doc : h) {
+//		    System.out.println(doc.toJson());
+//	    }
+//	    Document unvisited_link = frontier_collection.findOneAndUpdate(filter, updateOperationDocument, new FindOneAndUpdateOptions().sort(sort_doc));
+//        if (unvisited_link != null)
+//            return unvisited_link;
+//        return null;
+//    }
 
 	public ArrayList<Document> getLinksFromFrontier() {
 		ArrayList<Document> links_arr = new ArrayList<>();
 		AggregateIterable<Document> links_it = frontier_collection.aggregate(Arrays.asList(
 				Aggregates.lookup("Domain", "Domain_FK", "Domain", "mydomain"),
-				Aggregates.sort(new Document("Priority", 1).append("mydomain.Domain_Constraint", 1)),
-				Aggregates.match(Filters.and(Filters.lte("mydomain.Domain_Constraint", 1000), Filters.eq("Visited", false))),
-				Aggregates.limit(50)
+				Aggregates.match(Filters.and(Filters.lte("mydomain.Domain_Constraint", 10), Filters.eq("Visited", false))),
+				Aggregates.group("$Domain_FK", Accumulators.first("Priority", "$Priority"), Accumulators.first("url", "$_id"), Accumulators.first("domain_pr", "$mydomain.Domain_Constraint")),
+				Aggregates.sort(new Document("Priority", 1).append("Domain_Constraint", 1)),
+				Aggregates.limit(100)
 		));
 		//set links to onwork(null)
 		Bson newValue = new Document("Visited", null);
