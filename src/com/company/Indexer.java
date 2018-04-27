@@ -1,12 +1,12 @@
 package com.company;
 
+import opennlp.tools.stemmer.Stemmer;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import java.io.*;
 import java.util.Vector;
-
 //todo threads
 //todo stemming
 //todo new collection  for stopping words

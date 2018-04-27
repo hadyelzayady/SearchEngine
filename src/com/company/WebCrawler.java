@@ -26,15 +26,13 @@ import java.util.regex.Pattern;
 public class WebCrawler implements Runnable {
 
     private DBController controller;
-	private final int crawler_limit = 10;
+	private final int crawler_limit = 300;
     private static final AtomicLong number_crawled = new AtomicLong(0);
 	private static final AtomicInteger next = new AtomicInteger(0);
 	final private int lowest_priority = 100;
 	private static final Pattern url_pattern = Pattern.compile("(https?://)([^:^/^?]*)(:\\d*)?(.*)?");
-	private ArrayList<org.bson.Document> arr1 = new ArrayList<>();
-	private ArrayList<org.bson.Document> arr2 = new ArrayList<>();
-	private ArrayList<org.bson.Document> working_arr = arr1;
-	private ArrayList<org.bson.Document> empty_arr = arr2;
+	private ArrayList<org.bson.Document> working_arr = new ArrayList<>();
+	private ArrayList<org.bson.Document> empty_arr = new ArrayList<>();
     WebCrawler() {
         controller = DBController.ContollerInit();
         long visited_count = controller.getVisitedCount();
@@ -52,10 +50,8 @@ public class WebCrawler implements Runnable {
     }
 
 	private void arrayInit() {
-		arr1 = controller.getLinksFromFrontier();
-		arr2 = controller.getLinksFromFrontier();
-		working_arr = arr1;
-		empty_arr = arr2;
+		working_arr = controller.getLinksFromFrontier();
+		empty_arr = controller.getLinksFromFrontier();
 	}
 
 	int iter = 1;
@@ -83,7 +79,7 @@ public class WebCrawler implements Runnable {
                         if (!isPageDownloadedBefore(checksum)) {
 	                        System.out.println("number_crawled " + number_crawled + "  " + link);
                             savePageInFile(checksum, page_content);
-                            setCrawlingPriority(checksum, link_checksum, link_doc);
+	                        int priority = getCrawlingPriority(checksum, link_checksum, link_doc);
                             addLinksToFrontier(link, page);
 	                        //todo calc link parts once and send them as param  then delete this
 	                        Matcher matcher = url_pattern.matcher(link);
@@ -92,8 +88,9 @@ public class WebCrawler implements Runnable {
 //	                        String protocol = matcher.group(1);
 	                        //
 	                        incDomainConstraint(host);
-	                        new Thread(new AsyncaddUrlToVisited(link, checksum, controller)).start();
-                            controller.setUrlVisited(link, checksum);
+//	                        new Thread(new AsyncaddUrlToVisited(link, checksum, controller)).start();
+	                        controller.addUrlToVisited(link, checksum);
+	                        controller.updateLinkAndSetVisited(link, priority, checksum);
                         }
                     } else {
                         controller.deleteUrlFromFrontier(link);
@@ -146,11 +143,11 @@ public class WebCrawler implements Runnable {
 
     }
 
-    private void setCrawlingPriority(String new_checksum, String old_checksum, org.bson.Document link_doc) {
+	private int getCrawlingPriority(String new_checksum, String old_checksum, org.bson.Document link_doc) {
 	    String link = link_doc.getString("url");
         if (!link_doc.containsKey("Priority") || old_checksum == null) {
-            controller.setPriority(2, link, 2);
-            return;
+//            controller.setPriority(2, link, 2);
+	        return 2;
         }
         int link_priority = link_doc.getInteger("Priority");
 	    int link_offset = link_doc.getInteger("Offset");
@@ -159,13 +156,14 @@ public class WebCrawler implements Runnable {
         {
             if (link_offset < lowest_priority)
                 link_offset++;
-            controller.setPriority(link_offset, link, link_offset);//lower
+//            controller.setPriority(link_offset, link, link_offset);//lower
         } else if (!notchanged) {
 	        // System.out.println("changed page" + link);
             if (link_offset > 2)
                 --link_offset;
-            controller.setPriority(link_offset, link, link_offset);//lower
+//            controller.setPriority(link_offset, link, link_offset);//lower
         }
+		return link_offset;
     }
 
 	private void addLinksToFrontier(String url, Document page) throws UnsupportedEncodingException {
