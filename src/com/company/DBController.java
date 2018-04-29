@@ -175,30 +175,6 @@ public class DBController {
         frontier_collection.updateOne(filter, updateOperationDocument);
     }
 
-//    public synchronized Document getLinkFromFrontierAndSetOnwork() {
-//        Bson filter = new Document("Visited", false);
-//        Bson newValue = new Document("Visited", null);
-//        Bson sort_doc = new Document("Priority", 1);
-//        Bson updateOperationDocument = new Document("$set", newValue);
-//
-//	    AggregateIterable<Document> h = frontier_collection.aggregate(Arrays.asList(
-//			    Aggregates.sort(new Document("Priority", 1)),
-//			    Aggregates.lookup("Domain", "Domain_FK", "Domain", "mydomain"),
-//			    Aggregates.sort(new Document("mydomain.Domain_Constraint", 1)),
-//			    Aggregates.group("$Domain_FK"),
-//			    Aggregates.limit(100)
-//	    ));
-////	    Aggregates.group("Domain_FK")
-////	    Aggregates.match(Filters.ne("mydomain.Domain_Constraint",4))
-//	    for (Document doc : h) {
-//		    System.out.println(doc.toJson());
-//	    }
-//	    Document unvisited_link = frontier_collection.findOneAndUpdate(filter, updateOperationDocument, new FindOneAndUpdateOptions().sort(sort_doc));
-//        if (unvisited_link != null)
-//            return unvisited_link;
-//        return null;
-//    }
-
 	public ArrayList<Document> getLinksFromFrontier() {
 		ArrayList<Document> links_arr = new ArrayList<>();
 		AggregateIterable<Document> links_it = frontier_collection.aggregate(Arrays.asList(

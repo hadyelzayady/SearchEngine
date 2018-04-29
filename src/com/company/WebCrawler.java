@@ -196,7 +196,7 @@ public class WebCrawler implements Runnable {
 		ArrayList<org.bson.Document> domain_links = new ArrayList<>();
 		for (Element link : links) {
             String norm_link = normalizeLink(link.attr("abs:href"));
-			Matcher matcher = url_pattern.matcher(url);
+			Matcher matcher = url_pattern.matcher(norm_link);
 			if (matcher.find()) {
 				String domain = matcher.group(2);//protocol + domain as in join with frontier we can join
 				org.bson.Document document = new org.bson.Document("_id", norm_link).append("Visited", false).append("Priority", 2).append("Domain_FK", domain);
