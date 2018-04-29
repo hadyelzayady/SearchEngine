@@ -28,19 +28,19 @@ public class Main {
 //		String uri = matcher.group(4);
 //		String x=protocol+port+host+path;
 //		port.isEmpty();
-		//        System.out.print("Search: ");
+//		        System.out.print("Search: ");
 //		String encoded_url=URLEncoder.encode(url, "UTF-8");
 //		URI uri=new URI(url);
 //		URI path= uri.relativize(new URI(uri.getPath()));
 //		String uri=new URI(url).getHost();
 //		String decoded_url=URLDecoder.decode(encoded_url, "UTF-8");
 //		System.out.println(path);
-        //String input = scanner.nextLine();
-        /*try {
-            new Thread(new QProcessor(input)).start();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }*/
+//        String input = scanner.nextLine();
+//        try {
+//            new Thread(new QProcessor(input)).start();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
         new Thread(new CrawlerMain(num_of_threads)).start();
         new Thread(new Indexer()).start();
 	}

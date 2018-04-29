@@ -1,15 +1,13 @@
 package com.company;
 
+import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.*;
-import java.net.URI;
-import java.net.URL;
-import java.net.URLConnection;
-import java.net.URLEncoder;
+import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
@@ -31,8 +29,9 @@ public class WebCrawler implements Runnable {
 	private static final AtomicInteger next = new AtomicInteger(0);
 	final private int lowest_priority = 100;
 	private static final Pattern url_pattern = Pattern.compile("(https?://)([^:^/^?]*)(:\\d*)?(.*)?");
-	private ArrayList<org.bson.Document> working_arr = new ArrayList<>();
-	private ArrayList<org.bson.Document> empty_arr = new ArrayList<>();
+	private List<org.bson.Document> working_arr = new ArrayList<>();
+	private List<org.bson.Document> empty_arr = new ArrayList<>();
+	private boolean otherIsFilling = false;
     WebCrawler() {
         controller = DBController.ContollerInit();
         long visited_count = controller.getVisitedCount();
@@ -50,8 +49,10 @@ public class WebCrawler implements Runnable {
     }
 
 	private void arrayInit() {
+//		ArrayList<org.bson.Document> main_arr = controller.getLinksFromFrontier();
+//		working_arr=main_arr.subList(0,(main_arr.size()/2));
 		working_arr = controller.getLinksFromFrontier();
-		empty_arr = controller.getLinksFromFrontier();
+//		empty_arr = main_arr.subList(main_arr.size()/2,main_arr.size());
 	}
 
 	int iter = 1;
@@ -70,33 +71,51 @@ public class WebCrawler implements Runnable {
             if (link_doc != null) {
 	            String link = link_doc.getString("url");
                 String link_checksum = link_doc.getString("checksum");
-                try {
-                    if (isPageAllowedToCrawl(link)) {
-                        Document page = Jsoup.connect(link).get();
-                        String page_content = page.outerHtml();
-                        String checksum = toHexString(calcChecksum(page_content));
-//                        System.out.println(Thread.currentThread().getName());
-                        if (!isPageDownloadedBefore(checksum)) {
-	                        System.out.println("number_crawled " + number_crawled + "  " + link);
-                            savePageInFile(checksum, page_content);
-	                        int priority = getCrawlingPriority(checksum, link_checksum, link_doc);
-                            addLinksToFrontier(link, page);
-	                        //todo calc link parts once and send them as param  then delete this
-	                        Matcher matcher = url_pattern.matcher(link);
-	                        matcher.find();
-	                        String host = matcher.group(2);
-//	                        String protocol = matcher.group(1);
-	                        //
-	                        incDomainConstraint(host);
+	            try {
+		            Matcher matcher = url_pattern.matcher(link);
+		            matcher.find();
+		            String protocole = matcher.group(1);
+		            String domain = matcher.group(2);
+		            String port = matcher.group(3);
+		            String path = matcher.group(4);
+		            if (path == null)
+			            path = "";
+		            if (port == null)
+			            port = "";
+		            if (isPageAllowedToCrawl(link, protocole, domain, port, path)) {
+			            Document page = Jsoup.connect(link).get();
+			            String page_content = page.outerHtml();
+			            String checksum = toHexString(calcChecksum(page_content));
+			            boolean ischanged = isChanged(checksum, link_doc);
+			            if (ischanged) {
+				            if (!isPageDownloadedBefore(checksum)) {
+					            System.out.println("number_crawled " + number_crawled + "  " + link);
+					            savePageInFile(checksum, page_content);
+					            int priority = getCrawlingPriority(checksum, link_checksum, link_doc);
+					            addLinksToFrontier(link, page);
+					            incDomainConstraint(domain);
 //	                        new Thread(new AsyncaddUrlToVisited(link, checksum, controller)).start();
-	                        controller.addUrlToVisited(link, checksum);
-	                        controller.updateLinkAndSetVisited(link, priority, checksum);
-                        }
-                    } else {
-                        controller.deleteUrlFromFrontier(link);
-                    }
-                } catch (Exception ex) {
-                    System.out.println(link + " " + ex);
+					            controller.addUrlToVisited(link, checksum);
+					            controller.updateLinkAndSetVisited(link, priority, checksum);
+				            }
+			            } else //not changed page
+			            {
+				            int pr = getPriortyForNotChanged(link, link_doc.getInteger("Offset"));
+				            incDomainConstraint(domain);
+				            controller.addUrlToVisited(link, checksum);
+				            controller.updateLinkAndSetVisited(link, pr, checksum);
+			            }
+		            } else {
+			            controller.deleteUrlFromFrontier(link);
+		            }
+	            } catch (MalformedURLException ex) {
+		            System.out.println("crawler run " + ex);
+		            controller.deleteUrlFromFrontier(link);
+
+	            } catch (HttpStatusException ex) {
+		            controller.updateErroredUrl(link, lowest_priority);
+	            } catch (Exception ex) {
+		            System.out.println("crawler run2" + link + " " + ex);
                     number_crawled.decrementAndGet();
                     //this todo is wrong as the link may work later//todo this url must not be crawled again ,option:set checksum to null and in reseting keep visited for null checksum to true
                     controller.deleteUrlFromFrontier(link);// not html content type raises exception and we set it to visited to not visit it again
@@ -107,21 +126,38 @@ public class WebCrawler implements Runnable {
 
     }
 
+	private int getPriortyForNotChanged(String link, int link_offset) {
+		if (link_offset < lowest_priority)
+			link_offset++;
+		return link_offset;
+	}
+
+	private boolean isChanged(String checksum, org.bson.Document link_doc) {
+		if (link_doc.containsKey("checksum")) {
+			if (checksum.equals(link_doc.getString("checksum")))
+				return false;
+		}
+		return true;
+	}
+
 	private org.bson.Document getNextLinkToCrawl() {
 		synchronized (working_arr) {
 			if (working_arr.isEmpty()) {
+				//if two array are empty ,this happens rarely on the start of the search engine or filling array taken more time than consuming other array
+				if (otherIsFilling == true) {
+					return null;
+				}
 				//swap
-				ArrayList<org.bson.Document> temp = working_arr;
+
+				List<org.bson.Document> temp = working_arr;
 				working_arr = empty_arr;
 				empty_arr = temp;
-				next.set(0);
-				//
-				//todo possbile bug ,if two arrays are empty multiple threads will fill the arrays which will get the same urls.possible solu initialize the arrays
 			} else {
 				return working_arr.remove(0);
 			}
 		}
 		fillEmptyArray();
+		otherIsFilling = false;
 		return null;
 	}
 
@@ -144,25 +180,12 @@ public class WebCrawler implements Runnable {
     }
 
 	private int getCrawlingPriority(String new_checksum, String old_checksum, org.bson.Document link_doc) {
-	    String link = link_doc.getString("url");
         if (!link_doc.containsKey("Priority") || old_checksum == null) {
-//            controller.setPriority(2, link, 2);
 	        return 2;
         }
-        int link_priority = link_doc.getInteger("Priority");
 	    int link_offset = link_doc.getInteger("Offset");
-        boolean notchanged = new_checksum.equals(old_checksum);
-        if (notchanged)//not change --> lower priority (higher number is lower priority:1 is highest priority and 5 is lowest
-        {
-            if (link_offset < lowest_priority)
-                link_offset++;
-//            controller.setPriority(link_offset, link, link_offset);//lower
-        } else if (!notchanged) {
-	        // System.out.println("changed page" + link);
-            if (link_offset > 2)
+		if (link_offset > 2)
                 --link_offset;
-//            controller.setPriority(link_offset, link, link_offset);//lower
-        }
 		return link_offset;
     }
 
@@ -248,31 +271,20 @@ public class WebCrawler implements Runnable {
         return sb.toString();
     }
 
-    private boolean isPageAllowedToCrawl(String url) {
+	private boolean isPageAllowedToCrawl(String url, String protocol, String domain, String port, String path) {
         try {
-	        Matcher matcher = url_pattern.matcher(url);
-	        if (!matcher.find()) {
-
-	        }
-	        String host = matcher.group(2);
-	        String path = matcher.group(4);
-	        org.bson.Document robot_doc = controller.getRobot(host);
+	        org.bson.Document robot_doc = controller.getRobot(domain);
             if (robot_doc != null && robot_doc.getBoolean("updated")) {
-
                 return isPathAllowedInRobot(path, robot_doc);
             } else {
-	            String protocol = matcher.group(1);
-	            String port = matcher.group(3);
-	            if (port == null)
-		            port = "";
-	            String link = protocol + port + host + "/robots.txt";
+	            String link = protocol + port + domain + "/robots.txt";
 	            String text = downloadRobot(link);
                 String checksum = toHexString(calcChecksum(text));
                 if (robot_doc != null && checksum.equals(robot_doc.getString("checksum"))) {
-                    controller.setRobotUpdated(host);
+	                controller.setRobotUpdated(domain);
                     return isPathAllowedInRobot(path, robot_doc);
                 }
-                return addRobotAndCheckAllow(text, host, checksum, path);
+	            return addRobotAndCheckAllow(text, domain, checksum, path);
 //              String robot="User-agent: * Allow: /w/api.php?action=mobileview&Disallow: /api/Allow: /w/load.php?Allow: /api/rest_v1/?docDisallow: /w/Disallow: /trap/Disallow: /wiki/Special:Disallow: /wiki/Spezial:";
 
             }

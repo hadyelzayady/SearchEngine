@@ -204,9 +204,12 @@ public class DBController {
 		AggregateIterable<Document> links_it = frontier_collection.aggregate(Arrays.asList(
 				Aggregates.lookup("Domain", "Domain_FK", "Domain", "mydomain"),
 				Aggregates.match(Filters.and(Filters.lte("mydomain.Domain_Constraint", 10), Filters.eq("Visited", false))),
-				Aggregates.group("$Domain_FK", Accumulators.first("Priority", "$Priority"), Accumulators.first("url", "$_id"), Accumulators.first("domain_pr", "$mydomain.Domain_Constraint")),
+				Aggregates.group("$Domain_FK", Accumulators.first("Priority", "$Priority"), Accumulators.first("url", "$_id"),
+						Accumulators.first("domain_pr", "$mydomain.Domain_Constraint"),
+						Accumulators.first("checksum", "$checksum"),
+						Accumulators.first("Offset", "$Offset")),
 				Aggregates.sort(new Document("Priority", 1).append("Domain_Constraint", 1)),
-				Aggregates.limit(10)
+				Aggregates.limit(100)
 		));
 		//set links to onwork(null)
 		Bson newValue = new Document("Visited", null);
@@ -413,6 +416,13 @@ public class DBController {
 	public void updateLinkAndSetVisited(String link, int priority, String checksum) {
 		Bson filter = new Document("_id", link);
 		Bson newValue = new Document("Visited", true).append("checksum", checksum).append("Priority", priority).append("Offset", priority);
+		Bson updateOperationDocument = new Document("$set", newValue);
+		frontier_collection.updateOne(filter, updateOperationDocument);
+	}
+
+	public void updateErroredUrl(String link, int lowest_priority) {
+		Bson filter = new Document("_id", link);
+		Bson newValue = new Document("Visited", true).append("Priority", lowest_priority).append("Offset", lowest_priority);
 		Bson updateOperationDocument = new Document("$set", newValue);
 		frontier_collection.updateOne(filter, updateOperationDocument);
 	}
