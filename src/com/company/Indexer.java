@@ -1,5 +1,8 @@
 package com.company;
 
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
+import javafx.geometry.Pos;
 import opennlp.tools.stemmer.Stemmer;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -39,55 +42,65 @@ public class Indexer implements Runnable {
             Integer count=1;
             while(true)
             {
-            	while(controller.found_unindexed_pages())
-            	{
-            		String[] urlfFilename = controller.getUnIndexedPageUrlFilenameAndSet();
-    				if (urlfFilename == null) {
-    					continue;
-    				}
+	            while (controller.found_unindexed_pages()) {
+		            String[] urlfFilename = controller.getUnIndexedPageUrlFilenameAndSet();
+		            if (urlfFilename == null) {
+			            continue;
+		            }
 		            Hashtable<String, Integer> table = new Hashtable<String, Integer>();
+		            Hashtable<String, ArrayList<Pos_type>> Pos_type_table = new Hashtable<String, ArrayList<Pos_type>>();
 		            System.out.println("indexing: " + urlfFilename[0]);
-    				File input = new File("Pages/" + urlfFilename[1] + ".html");
+		            File input = new File("Pages/" + urlfFilename[1] + ".html");
 //                        controller.deleteInvertedFile(urlfFilename[0]);
-                        Document doc = Jsoup.parse(input, "UTF-8", urlfFilename[0]);
+		            Document doc = Jsoup.parse(input, "UTF-8", urlfFilename[0]);
 		            Elements body = doc.body().getAllElements();
 		            for (Element element : body) {
 			            String text = element.ownText();
 			            String[] tokens = Tokenizer(text);
 			            ArrayList<String> normalized_words = Normalizer(tokens, stopping_words);
 			            int tag_rank;
-			            for (int i = 0; i < normalized_words.size(); i++) {
-				            String temp_key = normalized_words.get(i);
-				            if (table.containsKey(temp_key)) {
-					            int value = table.get(temp_key).intValue();
-
-					            table.replace(temp_key, value, ++value);
-				            } else
-					            table.put(temp_key, count);
-			            }
-			            if (element.tagName().equals("h1")) {
-				            tag_rank = 1;
-			            } else if (element.tagName().equals("h2")) {
-				            tag_rank = 2;
-
-			            } else if (element.tagName().equals("h3")) {
-				            tag_rank = 3;
-
-			            } else if (element.tagName().equals("h4")) {
-				            tag_rank = 4;
-
-			            } else if (element.tagName().equals("h5")) {
-				            tag_rank = 5;
-
-			            } else if (element.tagName().equals("h6")) {
-				            tag_rank = 6;
-
-			            } else {
-				            tag_rank = 7;
-
-			            }
+			            int pos = 0;
 			            if (!normalized_words.isEmpty()) {
 
+				            if (element.tagName().equals("h1")) {
+					            tag_rank = 1;
+				            } else if (element.tagName().equals("h2")) {
+					            tag_rank = 2;
+
+				            } else if (element.tagName().equals("h3")) {
+					            tag_rank = 3;
+
+				            } else if (element.tagName().equals("h4")) {
+					            tag_rank = 4;
+
+				            } else if (element.tagName().equals("h5")) {
+					            tag_rank = 5;
+
+				            } else if (element.tagName().equals("h6")) {
+					            tag_rank = 6;
+
+				            } else {
+					            tag_rank = 7;
+				            }
+				            for (String word : normalized_words) {
+					            pos++;
+					            Pos_type word_pos_type = new Pos_type(pos, tag_rank);
+					            if (table.containsKey(word)) {
+						            Pos_type_table.get(word).add(word_pos_type);
+					            } else {
+						            ArrayList<Pos_type> temp = new ArrayList<Pos_type>();
+						            temp.add(word_pos_type);
+						            Pos_type_table.put(word, temp);
+					            }
+//					            org.bson.Document word_doc = new org.bson.Document("Url_id",urlfFilename[0]).append("Positions",pos);
+//					            DBObject modifiedObject =new BasicDBObject();
+//					            modifiedObject.put("$push", new BasicDBObject().append("token_info", word_doc));
+					            if (table.containsKey(word)) {
+						            int value = table.get(word).intValue();
+						            table.replace(word, value, ++value);
+					            } else
+						            table.put(word, count);
+				            }
 			            }
 
 		            }
