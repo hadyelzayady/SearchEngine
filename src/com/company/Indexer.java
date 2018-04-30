@@ -50,8 +50,48 @@ public class Indexer implements Runnable {
     				File input = new File("Pages/" + urlfFilename[1] + ".html");
 //                        controller.deleteInvertedFile(urlfFilename[0]);
                         Document doc = Jsoup.parse(input, "UTF-8", urlfFilename[0]);
-                        String body = doc.body().text();
-                        String[] tokens = Tokenizer(body);
+		            Elements body = doc.body().getAllElements();
+		            for (Element element : body) {
+			            String text = element.ownText();
+			            String[] tokens = Tokenizer(text);
+			            ArrayList<String> normalized_words = Normalizer(tokens, stopping_words);
+			            int tag_rank;
+			            for (int i = 0; i < normalized_words.size(); i++) {
+				            String temp_key = normalized_words.get(i);
+				            if (table.containsKey(temp_key)) {
+					            int value = table.get(temp_key).intValue();
+
+					            table.replace(temp_key, value, ++value);
+				            } else
+					            table.put(temp_key, count);
+			            }
+			            if (element.tagName().equals("h1")) {
+				            tag_rank = 1;
+			            } else if (element.tagName().equals("h2")) {
+				            tag_rank = 2;
+
+			            } else if (element.tagName().equals("h3")) {
+				            tag_rank = 3;
+
+			            } else if (element.tagName().equals("h4")) {
+				            tag_rank = 4;
+
+			            } else if (element.tagName().equals("h5")) {
+				            tag_rank = 5;
+
+			            } else if (element.tagName().equals("h6")) {
+				            tag_rank = 6;
+
+			            } else {
+				            tag_rank = 7;
+
+			            }
+			            if (!normalized_words.isEmpty()) {
+
+			            }
+
+		            }
+		            String[] tokens = null;
 		            ArrayList<String> no_space_tokens = Normalizer(tokens, stopping_words);
                         controller.AddTOWordFile( urlfFilename[0], no_space_tokens);
                         for(int i=0;i<no_space_tokens.size();i++)

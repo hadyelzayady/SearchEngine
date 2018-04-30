@@ -18,7 +18,7 @@ public class Main {
 
 		Scanner scanner = new Scanner(System.in);
 		System.out.print("number of Threads: \n");
-//		int num_of_threads = scanner.nextInt();
+		int num_of_threads = scanner.nextInt();
 //		Pattern pattern = Pattern.compile("(https?://)([^:^/]*)(:\\d*)?(.*)?");
 //		String url="https://docs.oracle.com/javase/7/docs/api/j ava/net/URI.html?q=h%20ebody";
 //		Matcher matcher = pattern.matcher(url);
@@ -43,8 +43,8 @@ public class Main {
 //        } catch (IOException e) {
 //            e.printStackTrace();
 //        }
-//        new Thread(new CrawlerMain(num_of_threads)).start();
-//        new Thread(new Indexer()).start();
-		new Thread(new QProcessor("link history")).start();
+		new Thread(new CrawlerMain(num_of_threads)).start();
+		new Thread(new Indexer()).start();
+//		new Thread(new QProcessor("link history")).start();
 	}
 }
