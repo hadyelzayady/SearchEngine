@@ -1,5 +1,6 @@
 package com.company;
 
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCursor;
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -38,16 +39,19 @@ public class QProcessor implements Runnable  {
 
 
     public void run() {
-    	Vector<String>Urls=new Vector<String>(2);
+	    ArrayList<String> Urls = new ArrayList<>(2);
     	String out="test.txt";
     	try {
 			FileWriter file_out=new FileWriter(out);
-    	for(int i=0;i<normalized.size();i++)
-    	{
-    		Document result= controller.findInInvertedFile(normalized.get(i));
-    		String Url=result.get("Url_id").toString();
-    		Urls.addElement(Url);
-    	}
+//    	for(int i=0;i<normalized.size();i++)
+//    	{
+//
+		    FindIterable<Document> result = controller.findInInvertedFile(normalized);
+		    ArrayList<Document> ds = (ArrayList<Document>) result.first().get("token_info");
+		    System.out.println(result.first().getString("_id"));
+		    for (Document doc : ds) {
+			    System.out.println(doc.get("Url_id"));
+		    }
     	for (int i=0;i<Urls.size();i++)
     	{
     		file_out.write(Urls.get(i));
