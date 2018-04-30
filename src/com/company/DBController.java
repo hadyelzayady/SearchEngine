@@ -30,6 +30,8 @@ import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Vector;
+
 
 //	List<Document> employees = (List<Document>) collection.find().into(
 //			new ArrayList<Document>());
@@ -45,6 +47,7 @@ public class DBController {
 	MongoCollection<Document> linkdatabase_collection;
 	MongoCollection<Document> queryResult_collection;
 	MongoCollection<Document> domain_collection;
+    MongoCollection<Document> Url_tokens;
 
 	private DBController() {
 		ConnectToDB.DBinit();
@@ -148,13 +151,32 @@ public class DBController {
 		}
 	}
 
-	public boolean found_unindexed_pages() {
-		boolean found = false;
-		Bson filter = new Document("indexed", false);
-		if (visited_collection.find(filter) != null)
-			found = true;
-		return found;
-	}
+    public void AddTOWordFile(String url,Vector<String> words)
+    {
+    	Document document=new Document("_id",url);
+    	Bson filter=eq("_id",url);
+    	document.append("words",words);
+    	Document temp=Url_tokens.find(filter).first();
+    	//Inverted_file.insertOne(document);
+    	if(temp!=null)
+    	{
+    		//Url_tokens.replaceOne(filter, document);
+    		System.out.println("Hello from Inverted file2");
+    	}
+    	else
+    	{
+    		Url_tokens.insertOne(document);
+    		System.out.println("Hello from Inverted file2");
+    	}
+    }
+
+    public boolean found_unindexed_pages() {
+        boolean found = false;
+        Bson filter = new Document("indexed", false);
+        if (visited_collection.find(filter) != null)
+            found = true;
+        return found;
+    }
 
 	public void deleteUrlFromSeed(String url) {
 		BasicDBObject document = new BasicDBObject();
@@ -342,11 +364,23 @@ public class DBController {
 		linkdatabase_collection.insertMany(links, new InsertManyOptions().ordered(false));
 	}
 
-	public void deleteInvertedFile(String link) {
-		Bson match = new BasicDBObject(); // to match your document
-		BasicDBObject update = new BasicDBObject("token_info", new BasicDBObject("Url_id", link));
-		Inverted_file.updateMany(match, new BasicDBObject("$pull", update));
-	}
+
+    public void deleteInvertedFile(String link) {
+    	Bson filter=eq("_id",link);
+    	FindIterable<Document> docs=Url_tokens.find(filter);
+    	Document doc=docs.first();
+    	String word = null;
+    	if(doc!=null)
+    	{
+    	   word=doc.get("words").toString();
+    	   Bson match = new BasicDBObject("_id",word); // to match your document
+           BasicDBObject update = new BasicDBObject("token_info", new BasicDBObject("Url_id", link));
+           Inverted_file.updateMany(match, new BasicDBObject("$pull", update));
+    	}
+        /*Bson match = new BasicDBObject("_id",word); // to match your document
+        BasicDBObject update = new BasicDBObject("token_info", new BasicDBObject("Url_id", link));
+        Inverted_file.updateMany(match, new BasicDBObject("$pull", update));*/
+    }
 
 /////farah
 

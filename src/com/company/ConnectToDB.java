@@ -19,6 +19,7 @@ public class ConnectToDB {
     public static MongoCollection<Document> linkdatabase_collection;
     public static MongoCollection<Document> queryResult_collection;
 	public static MongoCollection<Document> domain_collection;
+    public static MongoCollection<Document> Url_tokens;
 
     public static void DBinit() {
 
@@ -49,6 +50,7 @@ public class ConnectToDB {
         metadata_collection = database.getCollection("Metadata");
        // database.createCollection("Inverted_file");
         Inverted_file= database.getCollection("Inverted_file");
+        Url_tokens= database.getCollection("Url_tokens");
         robots_collection = database.getCollection("Robots");
         queryResult_collection = database.getCollection("Query_Result");
 

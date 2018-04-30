@@ -48,6 +48,8 @@ public class Indexer implements Runnable {
                         String body = doc.body().text();
                         String[] tokens = Tokenizer(body);
                         Vector<String> no_space_tokens = Normalizer(tokens,stopping_words);
+                        controller.AddTOWordFile( urlfFilename[0], no_space_tokens);
+                        System.out.println("passed Inverted file2");
                         Elements headers = doc.select("h1,h2,h3,h4,h5,h6");
                         Vector<String> no_space_headers;
                         String tag;
