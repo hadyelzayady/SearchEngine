@@ -11,6 +11,8 @@ import com.company.Token_info;
 import static com.mongodb.client.model.Filters.*;
 import static com.mongodb.client.model.Updates.*;
 
+import java.util.Vector;
+
 
 public class DBController {
     MongoCollection<Document> seed_collection;
@@ -19,6 +21,7 @@ public class DBController {
     MongoCollection<Document> metadata_collection;
 
     MongoCollection<Document> Inverted_file;
+    MongoCollection<Document> Url_tokens;
     MongoCollection<Document> Useless_words;
     MongoCollection<Document> robots_collection;
     MongoCollection<Document> linkdatabase_collection;
@@ -32,6 +35,8 @@ public class DBController {
         linkdatabase_collection = ConnectToDB.linkdatabase_collection;
 
         Inverted_file =  ConnectToDB.Inverted_file;
+        Url_tokens =  ConnectToDB.Url_tokens;
+        
 //        addUrlToSeed("https://www.wikipedia.org/");
 
         robots_collection = ConnectToDB.robots_collection;
@@ -123,6 +128,25 @@ public class DBController {
     			if(!check_doc.get("token_info").toString().contains(temp_doc0.toString()))
     				 Inverted_file.updateOne(filter, change);
     		}
+    	}
+    }
+    
+    public void AddTOWordFile(String url,Vector<String> words)
+    {
+    	Document document=new Document("_id",url);
+    	Bson filter=eq("_id",url);
+    	document.append("words",words);
+    	Document temp=Url_tokens.find(filter).first();
+    	//Inverted_file.insertOne(document);
+    	if(temp!=null)
+    	{
+    		//Url_tokens.replaceOne(filter, document);
+    		System.out.println("Hello from Inverted file2");
+    	}
+    	else
+    	{
+    		Url_tokens.insertOne(document);
+    		System.out.println("Hello from Inverted file2");
     	}
     }
 
@@ -299,8 +323,19 @@ public class DBController {
     }
 
     public void deleteInvertedFile(String link) {
-        Bson match = new BasicDBObject(); // to match your document
+    	Bson filter=eq("_id",link);
+    	FindIterable<Document> docs=Url_tokens.find(filter);
+    	Document doc=docs.first();
+    	String word = null;
+    	if(doc!=null)
+    	{
+    	   word=doc.get("words").toString();
+    	   Bson match = new BasicDBObject("_id",word); // to match your document
+           BasicDBObject update = new BasicDBObject("token_info", new BasicDBObject("Url_id", link));
+           Inverted_file.updateMany(match, new BasicDBObject("$pull", update));
+    	}
+        /*Bson match = new BasicDBObject("_id",word); // to match your document
         BasicDBObject update = new BasicDBObject("token_info", new BasicDBObject("Url_id", link));
-        Inverted_file.updateMany(match, new BasicDBObject("$pull", update));
+        Inverted_file.updateMany(match, new BasicDBObject("$pull", update));*/
     }
 }
