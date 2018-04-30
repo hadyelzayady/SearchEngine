@@ -45,7 +45,7 @@ public class ConnectToDB {
 	    domain_collection.createIndex(Indexes.ascending("Domain_Constraint"));
 	    Document index = new Document("link1", "").append("link2", "");
 	    linkdatabase_collection.createIndex(Indexes.compoundIndex(Indexes.text("link1"), Indexes.text("link2")), new IndexOptions().unique(true));
-            database.getCollection("Visited").drop();
+//            database.getCollection("Visited").drop();
             visited_collection = database.getCollection("Visited");
         metadata_collection = database.getCollection("Metadata");
        // database.createCollection("Inverted_file");

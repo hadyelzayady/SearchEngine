@@ -6,6 +6,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import java.io.*;
+import java.util.ArrayList;
 import java.util.Vector;
 //todo threads
 //todo stemming
@@ -25,7 +26,7 @@ public class Indexer implements Runnable {
 		{
 			//reading useless words
             String line;
-            Vector<String> stopping_words = new Vector<String>(2);
+			ArrayList<String> stopping_words = new ArrayList<String>(2);
             FileReader file_out = new FileReader("stopwords_en.txt");
             BufferedReader bf = new BufferedReader(file_out);
 			  while ((line = bf.readLine()) != null) {
@@ -41,17 +42,17 @@ public class Indexer implements Runnable {
     				if (urlfFilename == null) {
     					continue;
     				}
-		            //System.out.println("indexing: " + urlfFilename[0]);
+		            System.out.println("indexing: " + urlfFilename[0]);
     				File input = new File("Pages/" + urlfFilename[1] + ".html");
-                        controller.deleteInvertedFile(urlfFilename[0]);
+//                        controller.deleteInvertedFile(urlfFilename[0]);
                         Document doc = Jsoup.parse(input, "UTF-8", urlfFilename[0]);
                         String body = doc.body().text();
                         String[] tokens = Tokenizer(body);
-                        Vector<String> no_space_tokens = Normalizer(tokens,stopping_words);
+		            ArrayList<String> no_space_tokens = Normalizer(tokens, stopping_words);
                         controller.AddTOWordFile( urlfFilename[0], no_space_tokens);
                         System.out.println("passed Inverted file2");
                         Elements headers = doc.select("h1,h2,h3,h4,h5,h6");
-                        Vector<String> no_space_headers;
+		            ArrayList<String> no_space_headers;
                         String tag;
                         for (Element header : headers) {
                             tag = header.tagName().toLowerCase();
@@ -69,6 +70,7 @@ public class Indexer implements Runnable {
     						Token_info temp_token = new Token_info(no_space_tokens.get(i), urlfFilename[0], "text", i);
     						controller.AddToInvertedFile(temp_token, "Url_id", "Position", "Type");
     					}
+		            controller.setIndexed(urlfFilename[0]);
 		            //System.out.println("after add to inverted");
             	}
             }
@@ -92,21 +94,20 @@ public class Indexer implements Runnable {
 
 		return out;
 	}
-	
-	private static Vector<String> remove_spaces(String[] data_in)
-	{
-		Vector<String>temp=new Vector<String>(2);
+
+	private static ArrayList<String> remove_spaces(String[] data_in) {
+		ArrayList<String> temp = new ArrayList<>(2);
 		for(int i=0;i<data_in.length;i++)
 		{
 			if(data_in[i].equals(""))
 				continue;
 			else
-				temp.addElement(data_in[i]);
+				temp.add(data_in[i]);
 		}
 		return temp;
 	}
 
-    private static Vector<String> remove_stopping_words(Vector<String> v1, Vector<String> v2) {
+	private static ArrayList<String> remove_stopping_words(ArrayList<String> v1, ArrayList<String> v2) {
         v1.removeAll(v2);
         return v1;
     }
@@ -121,12 +122,12 @@ public class Indexer implements Runnable {
 		}
 		return count;
 	}
-	
-	public static Vector<String> Normalizer(String[] data_in,Vector<String>stopping_vector)
+
+	public static ArrayList<String> Normalizer(String[] data_in, ArrayList<String> stopping_vector)
 	{
 		String[] lowered_case=lower_case(data_in);
 		String[] NO_special_char=Remove_special_characters(lowered_case);
-		Vector<String> removed_spaces=remove_spaces(NO_special_char);
+		ArrayList<String> removed_spaces = remove_spaces(NO_special_char);
 		return remove_stopping_words(removed_spaces,stopping_vector);
 	}
 	private static String[] Remove_special_characters(String[] data_in)

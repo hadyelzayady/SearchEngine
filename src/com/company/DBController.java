@@ -57,7 +57,7 @@ public class DBController {
 		metadata_collection = ConnectToDB.metadata_collection;
 		linkdatabase_collection = ConnectToDB.linkdatabase_collection;
 		domain_collection = ConnectToDB.domain_collection;
-
+		Url_tokens = ConnectToDB.Url_tokens;
 		Inverted_file = ConnectToDB.Inverted_file;
 		//addUrlToSeed("https://www.wikipedia.org/");
 		//addUrlToSeed("https://www.theguardian.com/international");
@@ -151,23 +151,13 @@ public class DBController {
 		}
 	}
 
-    public void AddTOWordFile(String url,Vector<String> words)
+	public void AddTOWordFile(String url, ArrayList<String> words)
     {
     	Document document=new Document("_id",url);
-    	Bson filter=eq("_id",url);
-    	document.append("words",words);
-    	Document temp=Url_tokens.find(filter).first();
-    	//Inverted_file.insertOne(document);
-    	if(temp!=null)
-    	{
-    		//Url_tokens.replaceOne(filter, document);
-    		System.out.println("Hello from Inverted file2");
-    	}
-    	else
-    	{
-    		Url_tokens.insertOne(document);
-    		System.out.println("Hello from Inverted file2");
-    	}
+	    document.append("words", words);
+	    BasicDBObject query = new BasicDBObject();
+	    query.put("_id", url);
+	    Url_tokens.replaceOne(query, document, new UpdateOptions().upsert(true));
     }
 
     public boolean found_unindexed_pages() {
@@ -262,16 +252,21 @@ public class DBController {
     }*/
 
 	public String[] getUnIndexedPageUrlFilenameAndSet() {
-		Bson newValue = new Document("indexed", true);
+		Bson newValue = new Document("indexed", false);
 		Bson updateOperationDocument = new Document("$set", newValue);
-		BasicDBObject document = new BasicDBObject();
-		document.put("indexed", false);
-		Document page = visited_collection.findOneAndUpdate(document, updateOperationDocument);
+		Bson filter = new Document("indexed", false);
+		Document page = visited_collection.findOneAndUpdate(filter, updateOperationDocument);
 		if (page != null)
 			return new String[]{page.getString("_id"), page.getString("checksum")};
 		return null;
 	}
 
+	public void setIndexed(String url) {
+		Document newValue = new Document("indexed", true);
+		Bson updateOperationDocument = new Document("$set", newValue);
+		Bson filter = new Document("_id", url);
+		visited_collection.updateOne(filter, updateOperationDocument);
+	}
 	public int getCrawledCount() {
 		return 0;
 	}

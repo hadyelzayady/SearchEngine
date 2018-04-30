@@ -4,7 +4,8 @@ import com.mongodb.client.MongoCursor;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.ArrayList;
 import org.bson.Document;
 
 
@@ -12,10 +13,10 @@ public class QProcessor implements Runnable {
 
     private DBController controller = DBController.ContollerInit();
     private String[] tokenized;
-    private Vector<String> normalized;
+	private ArrayList<String> normalized;
 
     String line;
-    Vector<String> stopping_words = new Vector<String>(2);
+	ArrayList<String> stopping_words = new ArrayList<String>(2);
     FileReader file_out = new FileReader("stopwords_en.txt");
     BufferedReader bf = new BufferedReader(file_out);
 

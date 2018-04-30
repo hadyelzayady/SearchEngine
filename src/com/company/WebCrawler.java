@@ -46,7 +46,7 @@ public class WebCrawler implements Runnable {
         } else {
             controller.resetFrontier();
             controller.resetRobotStatus();
-		    controller.resetVisited();
+//		    controller.resetVisited();
             number_crawled.set(0);
         }
 	    arrayInit();
