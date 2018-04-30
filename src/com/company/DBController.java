@@ -11,10 +11,6 @@ import com.mongodb.client.model.*;
 import static com.mongodb.client.model.Projections.*;
 
 import com.mongodb.util.JSON;
-import org.springframework.data.mongodb.core.aggregation.AggregationOperation;
-import org.springframework.data.mongodb.core.aggregation.AggregationOptions;
-import org.springframework.data.mongodb.core.aggregation.AggregationResults;
-import org.springframework.data.mongodb.core.aggregation.LookupOperation;
 import com.mongodb.connection.QueryResult;
 import org.bson.Document;
 import org.bson.conversions.Bson;
