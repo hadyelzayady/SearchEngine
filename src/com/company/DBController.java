@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Vector;
 
 
@@ -375,10 +376,9 @@ public class DBController {
 
 /////farah
 
-	public Document findInInvertedFile(String s) {
-		Bson filter = eq("_id", s);
-		Document doc = Inverted_file.find(filter).first();
-		return doc;
+	public FindIterable<Document> findInInvertedFile(List<String> s) {
+		BasicDBObject objectToFind = new BasicDBObject("_id", new BasicDBObject("$in", s));
+		return Inverted_file.find(objectToFind);//.projection(Projections.exclude("_id"));
 	}
 
 	public void addManyUrlToFrontier(ArrayList<Document> frontier_links) {

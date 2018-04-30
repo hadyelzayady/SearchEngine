@@ -7,6 +7,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.Vector;
 import java.util.Hashtable;
 //todo threads
@@ -35,7 +36,6 @@ public class Indexer implements Runnable {
             }
             bf.close();
             file_out.close();
-            Hashtable<String,Integer> table=new Hashtable<String,Integer>();
             Integer count=1;
             while(true)
             {
@@ -45,6 +45,7 @@ public class Indexer implements Runnable {
     				if (urlfFilename == null) {
     					continue;
     				}
+		            Hashtable<String, Integer> table = new Hashtable<String, Integer>();
 		            System.out.println("indexing: " + urlfFilename[0]);
     				File input = new File("Pages/" + urlfFilename[1] + ".html");
 //                        controller.deleteInvertedFile(urlfFilename[0]);
@@ -60,7 +61,7 @@ public class Indexer implements Runnable {
                         	{
                         		int value=table.get(temp_key).intValue();
 
-                        		table.replace(temp_key,value, value++);
+		                        table.replace(temp_key, value, ++value);
                         	}
                         	else
                         		table.put(temp_key, count);
