@@ -52,15 +52,6 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module-library" exported="">
-      <library>
-        <CLASSES>
-          <root url="jar://E:/MyJavaDepend/apache-opennlp-1.8.4/lib/opennlp-tools-1.8.4.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
     <orderEntry type="library" name="opennlp-tools-1.8.4" level="project" />
   </component>
 </module>

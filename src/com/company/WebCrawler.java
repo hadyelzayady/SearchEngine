@@ -1,5 +1,6 @@
 package com.company;
 
+import org.bson.conversions.Bson;
 import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -16,6 +17,9 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.security.MessageDigest;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Updates.push;
 
 //as froniter is very large and we limited to 5000 somesites may not be crawled
 //todo domain restriction
@@ -194,8 +198,12 @@ public class WebCrawler implements Runnable {
         controller.linkdbAddOutLinks(url, links.size());
 		ArrayList<org.bson.Document> frontier_links = new ArrayList<>();
 		ArrayList<org.bson.Document> domain_links = new ArrayList<>();
+		ArrayList<String> out_links = new ArrayList<>();
+		ArrayList<org.bson.Document> in_link = new ArrayList<>();
+		org.bson.Document new_link = new org.bson.Document("_id", url);//for  innerlink
+
 		for (Element link : links) {
-            String norm_link = normalizeLink(link.attr("abs:href"));
+			String norm_link = normalizeLink(link.attr("abs:href"));
 			Matcher matcher = url_pattern.matcher(norm_link);
 			if (matcher.find()) {
 				String domain = matcher.group(2);//protocol + domain as in join with frontier we can join
@@ -203,13 +211,22 @@ public class WebCrawler implements Runnable {
 				org.bson.Document domain_doc = new org.bson.Document("Domain", domain).append("Domain_Constraint", 0);
 				frontier_links.add(document);
 				domain_links.add(domain_doc);
+				out_links.add(norm_link);
+				//innerlink
+				//org.bson.Document pointed_link= new org.bson.Document("_id",norm_link);//for  innerlink
+				//org.bson.Document push_op=new org.bson.Document("$push",new_link);
+				//org.bson.Document final_doc = pointed_link.append("Pointed_By", push_op);
+				//in_link.add(final_doc);
+
+				//
 //				org.bson.Document linkdb_document = new org.bson.Document("_id", norm_link).append("Visited", false).append("Priority", 2);
 			}
 			//link db
-//            controller.addInnLink(url, norm_link);
         }
 		controller.addManyUrlToFrontier(frontier_links);
 		controller.addManyDomain(domain_links);
+		//controller.addInnLink(in_link);
+//		controller.linkdbAddOutLinks(url,out_links);
     }
 
     private String normalizeLink(String url) {

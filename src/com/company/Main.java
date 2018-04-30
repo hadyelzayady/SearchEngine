@@ -1,5 +1,7 @@
 package com.company;
 
+import opennlp.tools.stemmer.PorterStemmer;
+
 import java.net.*;
 import java.io.*;
 import java.io.IOException;
