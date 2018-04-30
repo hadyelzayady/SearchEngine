@@ -3,12 +3,13 @@ package com.company;
 import com.mongodb.client.MongoCursor;
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Vector;
 import org.bson.Document;
 
 
-public class QProcessor implements Runnable {
+public class QProcessor implements Runnable  {
 
     private DBController controller = DBController.ContollerInit();
     private String[] tokenized;
@@ -35,8 +36,28 @@ public class QProcessor implements Runnable {
 
 
     public void run() {
-        Document result1 = controller.findInInvertedFile(normalized.get(0));
-        controller.queryResult_collection.insertOne(result1);
+    	Vector<String>Urls=new Vector<String>(2);
+    	String out="test.txt";
+    	try {
+			FileWriter file_out=new FileWriter(out);
+    	for(int i=0;i<normalized.size();i++)
+    	{
+    		Document result= controller.findInInvertedFile(normalized.get(i));
+    		String Url=result.get("Url_id").toString();
+    		Urls.addElement(Url);
+    	}
+    	for (int i=0;i<Urls.size();i++)
+    	{
+    		file_out.write(Urls.get(i));
+    	}
+    	file_out.close();
+    	}
+    	 catch (IOException e) {
+ 			// TODO Auto-generated catch block
+ 			e.printStackTrace();
+ 		}
+        /*Document result1 = controller.findInInvertedFile(normalized.get(0));
+        controller.queryResult_collection.insertOne(result1);*/
     }
 }
 

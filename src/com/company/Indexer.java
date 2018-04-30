@@ -7,6 +7,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import java.io.*;
 import java.util.Vector;
+import java.util.Hashtable;
 //todo threads
 //todo stemming
 //todo new collection  for stopping words
@@ -33,6 +34,8 @@ public class Indexer implements Runnable {
             }
             bf.close();
             file_out.close();
+            Hashtable<String,Integer> table=new Hashtable<String,Integer>();
+            Integer count=1;
             while(true)
             {
             	while(controller.found_unindexed_pages())
@@ -43,12 +46,24 @@ public class Indexer implements Runnable {
     				}
 		            //System.out.println("indexing: " + urlfFilename[0]);
     				File input = new File("Pages/" + urlfFilename[1] + ".html");
-                        controller.deleteInvertedFile(urlfFilename[0]);
+                        //controller.deleteInvertedFile(urlfFilename[0]);
                         Document doc = Jsoup.parse(input, "UTF-8", urlfFilename[0]);
                         String body = doc.body().text();
                         String[] tokens = Tokenizer(body);
                         Vector<String> no_space_tokens = Normalizer(tokens,stopping_words);
-                        controller.AddTOWordFile( urlfFilename[0], no_space_tokens);
+                        for(int i=0;i<no_space_tokens.size();i++)
+                        {
+                        	String temp_key=no_space_tokens.get(i);
+                        	if(table.containsKey(temp_key))
+                        	{
+                        		int value=table.get(temp_key).intValue();
+                        		
+                        		table.replace(temp_key,value, value++);
+                        	}
+                        	else
+                        		table.put(temp_key, count);
+                        }
+                        //controller.AddTOWordFile( urlfFilename[0], no_space_tokens);
                         System.out.println("passed Inverted file2");
                         Elements headers = doc.select("h1,h2,h3,h4,h5,h6");
                         Vector<String> no_space_headers;
@@ -59,7 +74,8 @@ public class Indexer implements Runnable {
                             String[] header_tokens = Tokenizer(header_name);
                             no_space_headers = Normalizer(header_tokens,stopping_words);
                             for (int i = 0; i < no_space_headers.size(); i++) {
-                                Token_info temp_token = new Token_info(no_space_headers.get(i), urlfFilename[0], tag, i);
+                                Token_info temp_token = new Token_info(no_space_headers.get(i),
+                                		urlfFilename[0], tag, i);
                                 controller.AddToInvertedFile(temp_token, "Url_id", "Position", "Type");
                                 no_space_tokens.remove(temp_token.get_token_name());
                             }

@@ -4,5 +4,6 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="lib" path="E:/APT/MyJavaDepend/jsoup-1.11.2.jar"/>
 	<classpathentry kind="lib" path="E:/APT/MyJavaDepend/mongo-java-driver-3.6.3.jar"/>
+	<classpathentry kind="lib" path="E:/APT/MyJavaDepend/apache-opennlp-1.8.4/lib/opennlp-tools-1.8.4.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
