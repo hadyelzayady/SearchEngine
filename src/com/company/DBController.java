@@ -421,6 +421,24 @@ public class DBController {
 		Bson updateOperationDocument = new Document("$set", newValue);
 		frontier_collection.updateOne(filter, updateOperationDocument);
 	}
+	
+	public Document get_url(String url)
+	{
+		Bson filter=eq("_id",url);
+		Document doc=Url_tokens.find(filter).first();
+		return doc;
+	}
+	
+	public long get_url_cout()
+	{
+		return  Url_tokens.count();
+	}
+	
+	public long get_token_cout(String Token)
+	{
+		Bson filter=eq("words",Token);
+		return Url_tokens.count(filter);
+	}
 
    /* public Document findInQueryFile(String s) {
         Bson filter = eq("_id", s);
