@@ -15,6 +15,7 @@ public class ConnectToDB {
     public static MongoCollection<Document> Inverted_file;
     public static MongoCollection<Document> robots_collection;
     public static MongoCollection<Document> linkdatabase_collection;
+    public static MongoCollection<Document> queryResult_collection;
     public static MongoCollection<Document> Url_tokens;
 
     public static void DBinit() {
@@ -40,6 +41,7 @@ public class ConnectToDB {
         Inverted_file= database.getCollection("Inverted_file");
         Url_tokens= database.getCollection("Url_tokens");
         robots_collection = database.getCollection("Robots");
+        queryResult_collection = database.getCollection("Query_Result");
 
 
     }

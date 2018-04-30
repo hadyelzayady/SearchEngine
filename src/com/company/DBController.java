@@ -5,12 +5,18 @@ import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.*;
 import static com.mongodb.client.model.Projections.*;
+
+import com.mongodb.connection.QueryResult;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import com.company.Token_info;
 import static com.mongodb.client.model.Filters.*;
 import static com.mongodb.client.model.Updates.*;
+import com.mongodb.client.MongoCursor;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Vector;
 
 
@@ -25,6 +31,7 @@ public class DBController {
     MongoCollection<Document> Useless_words;
     MongoCollection<Document> robots_collection;
     MongoCollection<Document> linkdatabase_collection;
+    MongoCollection<Document> queryResult_collection;
 
     private DBController() {
         ConnectToDB.DBinit();
@@ -36,10 +43,15 @@ public class DBController {
 
         Inverted_file =  ConnectToDB.Inverted_file;
         Url_tokens =  ConnectToDB.Url_tokens;
-        
+
 //        addUrlToSeed("https://www.wikipedia.org/");
 
+       //addUrlToSeed("https://www.wikipedia.org/");
+        addUrlToSeed("https://www.theguardian.com/international");
+        addUrlToSeed("http://www.bbc.com/news");
+        addUrlToSeed("https://www.history.com/");
         robots_collection = ConnectToDB.robots_collection;
+        queryResult_collection = ConnectToDB.queryResult_collection;
     }
 
     private static DBController handler = null;
@@ -58,7 +70,10 @@ public class DBController {
 
         }
     }
-    
+
+
+
+
     public void addUrlToFrontier(String url) {
         try {
             Document document = new Document("_id", url).append("Visited", false).append("Priority", 2);//null indicated just added under work or visited
@@ -130,7 +145,7 @@ public class DBController {
     		}
     	}
     }
-    
+
     public void AddTOWordFile(String url,Vector<String> words)
     {
     	Document document=new Document("_id",url);
@@ -182,6 +197,7 @@ public class DBController {
             return unvisited_link;
         return null;
     }
+
     public void removeLink(String url) {
         BasicDBObject document = new BasicDBObject();
         document.put("_id", url);
@@ -338,4 +354,20 @@ public class DBController {
         BasicDBObject update = new BasicDBObject("token_info", new BasicDBObject("Url_id", link));
         Inverted_file.updateMany(match, new BasicDBObject("$pull", update));*/
     }
+
+/////farah
+
+    public Document findInInvertedFile(String s) {
+        Bson filter = eq("_id", s);
+        Document doc = Inverted_file.find(filter).first();
+        return doc;
+    }
+
+   /* public Document findInQueryFile(String s) {
+        Bson filter = eq("_id", s);
+        Document doc = queryResult_collection.find(filter).first();
+        return doc;
+    }*/
+
+
 }

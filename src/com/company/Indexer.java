@@ -76,12 +76,13 @@ public class Indexer implements Runnable {
 			System.out.println(ex);
 		}	
 	}
-	public String[] Tokenizer(String body)
+
+	public static String[] Tokenizer(String body)
 	{
 		return body.split("\\s");
 	}
 
-	private String[] lower_case(String[] data_in)
+	private static String[] lower_case(String[] data_in)
 	{
 		String[] out=new String[data_in.length];
 		for(int i=0;i<data_in.length;i++)
@@ -90,7 +91,7 @@ public class Indexer implements Runnable {
 		return out;
 	}
 	
-	private Vector<String> remove_spaces(String[] data_in)
+	private static Vector<String> remove_spaces(String[] data_in)
 	{
 		Vector<String>temp=new Vector<String>(2);
 		for(int i=0;i<data_in.length;i++)
@@ -103,12 +104,12 @@ public class Indexer implements Runnable {
 		return temp;
 	}
 
-    private Vector<String> remove_stopping_words(Vector<String> v1, Vector<String> v2) {
+    private static Vector<String> remove_stopping_words(Vector<String> v1, Vector<String> v2) {
         v1.removeAll(v2);
         return v1;
     }
 
-	public int number_of_occurance(Vector<String>arr,String token)
+	public static int number_of_occurance(Vector<String>arr,String token)
 	{
 		int count=0;
 		for(int i=0;i<arr.size();i++)
@@ -119,14 +120,14 @@ public class Indexer implements Runnable {
 		return count;
 	}
 	
-	public Vector<String> Normalizer(String[] data_in,Vector<String>stopping_vector)
+	public static Vector<String> Normalizer(String[] data_in,Vector<String>stopping_vector)
 	{
 		String[] lowered_case=lower_case(data_in);
 		String[] NO_special_char=Remove_special_characters(lowered_case);
 		Vector<String> removed_spaces=remove_spaces(NO_special_char);
 		return remove_stopping_words(removed_spaces,stopping_vector);
 	}
-	private String[] Remove_special_characters(String[] data_in)
+	private static String[] Remove_special_characters(String[] data_in)
 	{
 		String[] out=new String[data_in.length];
 		for(int i=0;i<data_in.length;i++)
