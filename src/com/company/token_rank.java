@@ -37,7 +37,13 @@ public class token_rank {
 	public double  calculate_IDF()
 	{
 		double count=this.Url_tokens.size();
-		double token_count=controller.get_token_cout(this.token);
+		double token_count=0;
+		for(int i=0;i<this.Url_tokens.size();i++)
+		{
+			if(this.Url_tokens.get(i).containsValue(this.token))
+				token_count++;
+		}
+		//double token_count=controller.get_token_cout(this.token);
 		double temp=Math.log10((count/token_count));
 		return temp;
 	}
