@@ -110,7 +110,7 @@ public class Indexer implements Runnable {
 		            for (String word : Pos_type_table.keySet()
 				            ) {
 			            ArrayList<org.bson.Document> tokens_arr = Pos_type_table.get(word);
-			            org.bson.Document link_doc = new org.bson.Document("Url_id", urlfFilename[0]).append("Position_type", tokens_arr);
+			            org.bson.Document link_doc = new org.bson.Document("Url_id", urlfFilename[0]).append("Position_type", tokens_arr).append("TF", table.get(word));
 			            org.bson.Document modifiedObject = new org.bson.Document();
 			            modifiedObject.put("$push", new BasicDBObject("token_info", link_doc));
 			            controller.Inverted_file.updateOne(new BasicDBObject("_id", word), modifiedObject, new UpdateOptions().upsert(true));
@@ -118,6 +118,7 @@ public class Indexer implements Runnable {
 		            }
 		            controller.AddTOWordFile(urlfFilename[0], table.keySet());
 		            controller.setIndexed(urlfFilename[0]);
+		            System.out.println("finished indexing:" + urlfFilename[0]);
             	}
             }
 		}
