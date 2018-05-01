@@ -93,7 +93,7 @@ public class DBController {
 	public void addUrlToVisited(String url, String checksum) {
 		try {
 				Document document = new Document("_id", url).append("checksum", checksum).append("indexed", false);
-				visited_collection.insertOne(document);
+			visited_collection.replaceOne(new Document("_id", url), document, new UpdateOptions().upsert(true));
 		} catch (Exception ex) {
 			System.out.println("add url to visited " + ex);
 		}

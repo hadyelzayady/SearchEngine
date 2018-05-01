@@ -37,7 +37,11 @@ public class Ranker {
 					url_rank_table.put(url, rank);
 				}
 			}
-			return sortByValues(url_rank_table);
+			List l = sortByValues(url_rank_table);
+//			for (String link:l)
+//			{
+//
+//			}
 
 
 //			Double TF=link_doc.getDouble("NormalizedTF");
@@ -60,13 +64,19 @@ public class Ranker {
 		// Defined Custom Comparator here
 		Collections.sort(list, new Comparator() {
 			public int compare(Object o1, Object o2) {
-				return ((Comparable) ((Map.Entry) (o1)).getValue())
-						.compareTo(((Map.Entry) (o2)).getValue());
+				return ((Comparable) ((Map.Entry) (o2)).getValue())
+						.compareTo(((Map.Entry) (o1)).getValue());
 			}
 		});
 
 		// Here I am copying the sorted list in HashMap
 		// using LinkedHashMap to preserve the insertion order
+		HashMap sortedHashMap = new LinkedHashMap();
+		for (Iterator it = list.iterator(); it.hasNext(); ) {
+			Map.Entry entry = (Map.Entry) it.next();
+			sortedHashMap.put(entry.getKey(), entry.getValue());
+		}
+		System.out.println(sortedHashMap);
 		return list;
 	}
 	/*private ArrayList<String>Popular_pages(long[] ranks_input)

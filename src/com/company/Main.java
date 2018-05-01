@@ -45,6 +45,6 @@ public class Main {
 //        }
 //		new Thread(new CrawlerMain(num_of_threads)).start();
 //		new Thread(new Indexer()).start();
-		new Thread(new QProcessor("top english")).start();
+		new Thread(new QProcessor("rights")).start();
 	}
 }
