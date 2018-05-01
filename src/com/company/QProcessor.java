@@ -45,7 +45,7 @@ public class QProcessor implements Runnable  {
 //    	for(int i=0;i<normalized.size();i++)
 //    	{
 //
-		    FindIterable<Document> result = controller.findInInvertedFile(normalized);
+	    FindIterable<Document> result = controller.findInInvertedFile(normalized);
 	    ArrayList<String> urls = new ArrayList<String>();
 	    for (Document doc : result) {
 		    System.out.println(doc);

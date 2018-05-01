@@ -32,102 +32,108 @@ public class Indexer implements Runnable {
 		return normalized_url;
 	}
 	public void run() {
-		try
-		{
-			//reading useless words
-            String line;
-			ArrayList<String> stopping_words = new ArrayList<String>(2);
-            FileReader file_out = new FileReader("stopwords_en.txt");
-            BufferedReader bf = new BufferedReader(file_out);
-			  while ((line = bf.readLine()) != null) {
-                stopping_words.add(line);
-            }
-            bf.close();
-            file_out.close();
-            Integer count=1;
-            while(true)
-            {
-	            while (controller.found_unindexed_pages()) {
-		            String[] urlfFilename = controller.getUnIndexedPageUrlFilenameAndSet();
-		            if (urlfFilename == null) {
-			            continue;
-		            }
-		            Hashtable<String, Integer> table = new Hashtable<String, Integer>();
-		            Hashtable<String, ArrayList<org.bson.Document>> Pos_type_table = new Hashtable<String, ArrayList<org.bson.Document>>();
-		            System.out.println("indexing: " + urlfFilename[0]);
-		            File input = new File("Pages/" + urlfFilename[1] + ".html");
-		            controller.deleteInvertedFile(urlfFilename[0]);
-		            Document doc = Jsoup.parse(input, "UTF-8", urlfFilename[0]);
-		            Elements body = doc.body().getAllElements();
-		            int pos = 0;
-		            for (Element element : body) {
-			            String text = element.text();
-			            String[] tokens = Tokenizer(text);
-			            ArrayList<String> normalized_words = Normalizer(tokens, stopping_words);
-			            int tag_rank;
-			            if (!normalized_words.isEmpty()) {
-				            if (element.tagName().equals("h1")) {
-					            tag_rank = 1;
-				            } else if (element.tagName().equals("h2")) {
-					            tag_rank = 2;
 
-				            } else if (element.tagName().equals("h3")) {
-					            tag_rank = 3;
-
-				            } else if (element.tagName().equals("h4")) {
-					            tag_rank = 4;
-
-				            } else if (element.tagName().equals("h5")) {
-					            tag_rank = 5;
-
-				            } else if (element.tagName().equals("h6")) {
-					            tag_rank = 6;
-
-				            } else {
-					            tag_rank = 7;
-				            }
-				            for (String word : normalized_words) {
-					            pos++;
-					            org.bson.Document pos_type_doc = new org.bson.Document("Position", pos).append("Tag_rank", tag_rank);
-					            if (Pos_type_table.containsKey(word)) {
-						            Pos_type_table.get(word).add(pos_type_doc);
-
-					            } else {
-						            ArrayList<org.bson.Document> temp = new ArrayList<org.bson.Document>();
-						            temp.add(pos_type_doc);
-						            Pos_type_table.put(word, temp);
-					            }
-					            if (table.containsKey(word)) {
-						            int value = table.get(word).intValue();
-						            table.replace(word, value, ++value);
-					            } else
-						            table.put(word, count);
-				            }
-			            }
-
-		            }
-		            ArrayList<org.bson.Document> words_docs = new ArrayList<>();
-		            for (String word : Pos_type_table.keySet()
-				            ) {
-			            ArrayList<org.bson.Document> tokens_arr = Pos_type_table.get(word);
-			            org.bson.Document link_doc = new org.bson.Document("Url_id", urlfFilename[0]).append("Position_type", tokens_arr).append("TF", table.get(word));
-			            org.bson.Document modifiedObject = new org.bson.Document();
-			            modifiedObject.put("$push", new BasicDBObject("token_info", link_doc));
-			            controller.Inverted_file.updateOne(new BasicDBObject("_id", word), modifiedObject, new UpdateOptions().upsert(true));
-
-		            }
-		            controller.AddTOWordFile(urlfFilename[0], table.keySet());
-		            controller.setIndexed(urlfFilename[0]);
-		            System.out.println("finished indexing:" + urlfFilename[0]);
-            	}
-            }
+		//reading useless words
+		ArrayList<String> stopping_words = new ArrayList<>();
+		try {
+			String line;
+			stopping_words = new ArrayList<String>(2);
+			FileReader file_out = new FileReader("stopwords_en.txt");
+			BufferedReader bf = new BufferedReader(file_out);
+			while ((line = bf.readLine()) != null) {
+				stopping_words.add(line);
+			}
+			bf.close();
+			file_out.close();
+		} catch (Exception ex) {
+			System.out.println("opening stopping words " + ex);
 		}
-		catch (Exception ex)
-		{
-			System.out.println(ex);
-		}	
-	}
+		while (true) {
+			try {
+				while (controller.found_unindexed_pages()) {
+					String[] urlfFilename = controller.getUnIndexedPageUrlFilenameAndSet();
+					if (urlfFilename == null) {
+						continue;
+					}
+					Integer count = 1;
+					Hashtable<String, Integer> table = new Hashtable<String, Integer>();
+					Hashtable<String, ArrayList<org.bson.Document>> Pos_type_table = new Hashtable<String, ArrayList<org.bson.Document>>();
+					System.out.println("indexing: " + urlfFilename[0]);
+					File input = new File("Pages/" + urlfFilename[1] + ".html");
+					controller.deleteInvertedFile(urlfFilename[0]);
+					Document doc = Jsoup.parse(input, "UTF-8", urlfFilename[0]);
+					Elements body = doc.body().getAllElements();
+					int pos = 0;
+					for (Element element : body) {
+						if (!element.tagName().equals("script")) {
+							String text = element.ownText();
+							String[] tokens = Tokenizer(text);
+							ArrayList<String> normalized_words = Normalizer(tokens, stopping_words);
+							int tag_rank;
+							if (!normalized_words.isEmpty()) {
+								if (element.tagName().equals("h1") || element.parents().is("h1")) {
+									tag_rank = 1;
+								} else if (element.tagName().equals("h2") || element.parents().is("h2")) {
+									tag_rank = 2;
 
+								} else if (element.tagName().equals("h3") || element.parents().is("h3")) {
+									tag_rank = 3;
+
+								} else if (element.tagName().equals("h4") || element.parents().is("h4")) {
+									tag_rank = 4;
+
+								} else if (element.tagName().equals("h5") || element.parents().is("h5")) {
+									tag_rank = 5;
+
+								} else if (element.tagName().equals("h6") || element.parents().is("h6")) {
+									tag_rank = 6;
+
+								} else {
+									tag_rank = 7;
+								}
+								for (String word : normalized_words) {
+									pos++;
+									org.bson.Document pos_type_doc = new org.bson.Document("Position", pos).append("Tag_rank", tag_rank);
+									if (Pos_type_table.containsKey(word)) {
+										Pos_type_table.get(word).add(pos_type_doc);
+
+									} else {
+										ArrayList<org.bson.Document> temp = new ArrayList<org.bson.Document>();
+										temp.add(pos_type_doc);
+										Pos_type_table.put(word, temp);
+									}
+									if (table.containsKey(word)) {
+										int value = table.get(word).intValue();
+										table.replace(word, value, ++value);
+									} else
+										table.put(word, count);
+								}
+							}
+						}
+					}
+					ArrayList<org.bson.Document> words_docs = new ArrayList<>();
+					for (String word : Pos_type_table.keySet()
+							) {
+						ArrayList<org.bson.Document> tokens_arr = Pos_type_table.get(word);
+						org.bson.Document link_doc = new org.bson.Document("Url_id", urlfFilename[0]).append("Position_type", tokens_arr).append("TF", table.get(word));
+						org.bson.Document modifiedObject = new org.bson.Document();
+						modifiedObject.put("$push", new BasicDBObject("token_info", link_doc));
+						try {
+							controller.Inverted_file.updateOne(new BasicDBObject("_id", word), modifiedObject, new UpdateOptions().upsert(true));
+						} catch (Exception ex) {
+							System.out.println("error in adding word to inverted file: " + ex);
+						}
+
+					}
+					controller.AddTOWordFile(urlfFilename[0], table.keySet());
+					controller.setIndexed(urlfFilename[0]);
+					System.out.println("finished indexing:" + urlfFilename[0]);
+				}
+			} catch (Exception ex) {
+				System.out.println(ex);
+			}
+		}
+	}
 	public static String[] Tokenizer(String body)
 	{
 		return body.split("\\s");
