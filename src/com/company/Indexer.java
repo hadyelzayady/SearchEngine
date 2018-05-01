@@ -4,6 +4,7 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import com.mongodb.client.model.UpdateOptions;
 import javafx.geometry.Pos;
+import opennlp.tools.stemmer.PorterStemmer;
 import opennlp.tools.stemmer.Stemmer;
 import org.bson.conversions.Bson;
 import org.jsoup.Jsoup;
@@ -142,11 +143,14 @@ public class Indexer implements Runnable {
 		return body.split("\\s");
 	}
 
-	private static String[] lower_case(String[] data_in)
-	{
-		String[] out=new String[data_in.length];
-		for(int i=0;i<data_in.length;i++)
-			out[i]=data_in[i].toLowerCase();
+	private static ArrayList<String> lower_case(String[] data_in) {
+		ArrayList<String> out = new ArrayList<String>();
+		PorterStemmer stemmer = new PorterStemmer();
+		for(int i=0;i<data_in.length;i++) {
+			String x = stemmer.stem(data_in[i].toLowerCase().trim());
+			if (!x.isEmpty())
+				out.add(x);
+		}
 
 		return out;
 	}
@@ -155,10 +159,7 @@ public class Indexer implements Runnable {
 		ArrayList<String> temp = new ArrayList<>(2);
 		for(int i=0;i<data_in.length;i++)
 		{
-			if(data_in[i].equals(""))
-				continue;
-			else
-				temp.add(data_in[i]);
+			temp.add(data_in[i].trim());
 		}
 		return temp;
 	}
@@ -181,10 +182,9 @@ public class Indexer implements Runnable {
 
 	public static ArrayList<String> Normalizer(String[] data_in, ArrayList<String> stopping_vector)
 	{
-		String[] lowered_case=lower_case(data_in);
-		String[] NO_special_char=Remove_special_characters(lowered_case);
-		ArrayList<String> removed_spaces = remove_spaces(NO_special_char);
-		return remove_stopping_words(removed_spaces,stopping_vector);
+		String[] NO_special_char = Remove_special_characters(data_in);
+		ArrayList<String> lowered_case = lower_case(NO_special_char);
+		return remove_stopping_words(lowered_case, stopping_vector);
 	}
 	private static String[] Remove_special_characters(String[] data_in)
 	{

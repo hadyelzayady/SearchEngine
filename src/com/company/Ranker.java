@@ -31,13 +31,12 @@ public class Ranker {
 				double TF = link_doc.getDouble("NormalizedTF");
 				double tag_rank = link_doc.getInteger("Max_rank");
 				double rank = IDF * TF * tag_rank;
-				if (url_rank_table.contains(url)) {
+				if (url_rank_table.containsKey(url)) {
 					url_rank_table.put(url, url_rank_table.get(url) + rank);
 				} else {
 					url_rank_table.put(url, rank);
 				}
 			}
-			List l = sortByValues(url_rank_table);
 //			for (String link:l)
 //			{
 //
@@ -56,6 +55,7 @@ public class Ranker {
 //				url_rank_table.put(url,rank);
 //			}
 		}
+		List l = sortByValues(url_rank_table);
 		return null;
 	}
 

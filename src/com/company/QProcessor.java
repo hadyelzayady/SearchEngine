@@ -55,13 +55,13 @@ public class QProcessor implements Runnable  {
 	    Ranker r = new Ranker(result, total_docs);
 	    List<Document> sorted_links = r.rank_pages();
 	    ArrayList<String> urls = new ArrayList<String>();
-	    for (Document doc : result) {
-		    System.out.println(doc);
-		    ArrayList<Document> docs = (ArrayList<Document>) doc.get("token_info");
-		    for (Document doc2 : docs) {
-			    urls.add(doc2.getString("Url_id"));
-		    }
-	    }
+//	    for (Document doc : result) {
+//		    System.out.println(doc);
+//		    ArrayList<Document> docs = (ArrayList<Document>) doc.get("token_info");
+//		    for (Document doc2 : docs) {
+//			    urls.add(doc2.getString("Url_id"));
+//		    }
+//	    }
 //	    double[] h = new Ranker(urls, normalized).get_ranks();
 //	    for (int i = 0; i < h.length; i++) {
 //		    System.out.println(h[i] + "  :" + urls.get(i));
