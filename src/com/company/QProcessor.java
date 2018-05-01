@@ -1,12 +1,16 @@
 package com.company;
 
+import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCursor;
+
+import java.awt.*;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Vector;
 import java.util.ArrayList;
 import org.bson.Document;
@@ -47,6 +51,9 @@ public class QProcessor implements Runnable  {
 //    	{
 //
 	    FindIterable<Document> result = controller.findInInvertedFile(normalized);
+	    double total_docs = controller.getTotalDocsCount();
+	    Ranker r = new Ranker(result, total_docs);
+	    List<Document> sorted_links = r.rank_pages();
 	    ArrayList<String> urls = new ArrayList<String>();
 	    for (Document doc : result) {
 		    System.out.println(doc);
@@ -55,10 +62,10 @@ public class QProcessor implements Runnable  {
 			    urls.add(doc2.getString("Url_id"));
 		    }
 	    }
-	    double[] h = new Ranker(urls, normalized).get_ranks();
-	    for (int i = 0; i < h.length; i++) {
-		    System.out.println(h[i] + "  :" + urls.get(i));
-	    }
+//	    double[] h = new Ranker(urls, normalized).get_ranks();
+//	    for (int i = 0; i < h.length; i++) {
+//		    System.out.println(h[i] + "  :" + urls.get(i));
+//	    }
 //		    ArrayList<Document> ds = (ArrayList<Document>) result;
 //		    for (Document doc : ds) {
 //			    System.out.println(doc.get("Url_id"));

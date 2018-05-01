@@ -1,49 +1,87 @@
 package com.company;
 
+import com.mongodb.client.AggregateIterable;
+import com.mongodb.client.FindIterable;
 import org.bson.*;
 
-import java.util.ArrayList;
+import javax.print.Doc;
+import java.util.*;
+
+import static java.lang.Math.log;
 
 public class Ranker {
-	private ArrayList<String>popular_urls;
-	private ArrayList<String>urls_comming;
-	private double[] ranked_urls;
-	public Ranker(ArrayList<String> urls_comming,String[] query)
-	{
-		this.urls_comming=urls_comming;
-		this.ranked_urls=rank_pages(query);
+	private ArrayList<Document> popular_urls;
+	private FindIterable<Document> words_urls;
+	private ArrayList<Document> ranked_urls;
+	double total_docs;
+
+	public Ranker(FindIterable<Document> urls_comming, double total_docs) {
+		this.words_urls = urls_comming;
+		this.total_docs = total_docs;
 		//this.popular_urls=Popular_pages(ranked_urls);
 	}
-	private double[] rank_pages(String[] query)
-	{
-		double[] ranks=new double[this.urls_comming.size()];
-		for(int i=0;i<this.urls_comming.size();i++)
-		{
-			double sum=0;
-			for(int j=0;j<query.length;j++)
-			{
-				token_rank temp=new token_rank(this.urls_comming.get(i),query[j]);
-				double TFi= temp.calculate_TF();
-				double IDFi= temp.calculate_IDF();
-				sum+=(TFi*IDFi);
+
+	public List<Document> rank_pages() {
+		Hashtable<String, Double> url_rank_table = new Hashtable<String, Double>();
+		for (Document word_url : words_urls) {
+			ArrayList<Document> word_urls = (ArrayList<Document>) word_url.get("token_info");
+			double IDF = log(total_docs / (double) word_urls.size());
+			for (Document link_doc : word_urls) {
+				String url = link_doc.getString("Url_id");
+				double TF = link_doc.getDouble("NormalizedTF");
+				double tag_rank = link_doc.getInteger("Max_rank");
+				double rank = IDF * TF * tag_rank;
+				if (url_rank_table.contains(url)) {
+					url_rank_table.put(url, url_rank_table.get(url) + rank);
+				} else {
+					url_rank_table.put(url, rank);
+				}
 			}
-			ranks[i]=sum;
+			return sortByValues(url_rank_table);
+
+
+//			Double TF=link_doc.getDouble("NormalizedTF");
+//			double rank=TF*IDF/**doc.getInteger("Max_rank")*/;
+//			String url=link_doc.getString("Url_id");
+//			if(url_rank_table.contains(url))
+//			{
+//				url_rank_table.put(url,url_rank_table.get(url)+rank);
+//			}
+//			else
+//			{
+//				url_rank_table.put(url,rank);
+//			}
 		}
-		return ranks;
+		return null;
+	}
+
+	private static List sortByValues(Hashtable map) {
+		List list = new LinkedList(map.entrySet());
+		// Defined Custom Comparator here
+		Collections.sort(list, new Comparator() {
+			public int compare(Object o1, Object o2) {
+				return ((Comparable) ((Map.Entry) (o1)).getValue())
+						.compareTo(((Map.Entry) (o2)).getValue());
+			}
+		});
+
+		// Here I am copying the sorted list in HashMap
+		// using LinkedHashMap to preserve the insertion order
+		return list;
 	}
 	/*private ArrayList<String>Popular_pages(long[] ranks_input)
 	{
 		ArrayList<String> urls=new ArrayList<String>();
 		return urls_input;
 	}*/
-	public ArrayList<String> urls()
-	{
-		return this.popular_urls;
-	}
-
-	public double[] get_ranks()
-	{
-		return this.ranked_urls;
-	}
+//	public ArrayList<String> urls()
+//	{
+//		return this.popular_urls;
+//	}
+//
+//	public double[] get_ranks()
+//	{
+//		return this.ranked_urls;
+//	}
 
 }

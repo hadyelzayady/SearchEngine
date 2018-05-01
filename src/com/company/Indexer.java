@@ -73,24 +73,24 @@ public class Indexer implements Runnable {
 							int tag_rank;
 							if (!normalized_words.isEmpty()) {
 								if (element.tagName().equals("h1") || element.parents().is("h1")) {
-									tag_rank = 1;
+									tag_rank = 7;
 								} else if (element.tagName().equals("h2") || element.parents().is("h2")) {
-									tag_rank = 2;
+									tag_rank = 6;
 
 								} else if (element.tagName().equals("h3") || element.parents().is("h3")) {
-									tag_rank = 3;
+									tag_rank = 5;
 
 								} else if (element.tagName().equals("h4") || element.parents().is("h4")) {
 									tag_rank = 4;
 
 								} else if (element.tagName().equals("h5") || element.parents().is("h5")) {
-									tag_rank = 5;
+									tag_rank = 3;
 
 								} else if (element.tagName().equals("h6") || element.parents().is("h6")) {
-									tag_rank = 6;
+									tag_rank = 2;
 
 								} else {
-									tag_rank = 7;
+									tag_rank = 1;
 								}
 								for (String word : normalized_words) {
 									pos++;

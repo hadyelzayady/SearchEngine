@@ -372,19 +372,42 @@ public class DBController {
 /////farah
 
 	public FindIterable<Document> findInInvertedFile(List<String> s) {
+//		String [] st={"$TF","-1"};
 //		AggregateIterable<Document> links_it = Inverted_file.aggregate(Arrays.asList(
-//				Aggregates.match(Filters.eq("_id",s.get(0))),
-////				Aggregates.group("$Domain_FK", Accumulators.first("Priority", "$Priority"), Accumulators.first("url", "$_id"),
+////				Aggregates.group("$Url_id"), Accumulators.first("Priority", "$Priority"), Accumulators.first("url", "$_id"),
 ////						Accumulators.first("domain_pr", "$mydomain.Domain_Constraint"),
 ////						Accumulators.first("checksum", "$checksum"),
 ////						Accumulators.first("Offset", "$Offset")),
 //				Aggregates.unwind("$token_info"),
-//				Aggregates.sort(new Document("token_info.Max_rank", 1))
+//				Aggregates.match(Filters.in("_id",s))
+////				Aggregates.group("$token_info.Url_id",Accumulators.max("max_TF",new Document("$multiply",st)))
 //				));
+//		for (Document doc:links_it) {
+//			System.out.println(doc);
+//		}
 		BasicDBObject objectToFind = new BasicDBObject("_id", new BasicDBObject("$in", s));
 		return Inverted_file.find(objectToFind);//.projection(Projections.exclude("_id"));
+//		return links_it;
 	}
 
+	public AggregateIterable<Document> findIDF(List<String> s) {
+		String[] st = {"$TF", "-1"};
+		long total_docs = Url_tokens.count();
+		AggregateIterable<Document> links_it = Inverted_file.aggregate(Arrays.asList(
+//				Aggregates.group("$Url_id"), Accumulators.first("Priority", "$Priority"), Accumulators.first("url", "$_id"),
+//						Accumulators.first("domain_pr", "$mydomain.Domain_Constraint"),
+//						Accumulators.first("checksum", "$checksum"),
+//						Accumulators.first("Offset", "$Offset")),
+				Aggregates.match(Filters.in("_id", s))
+//				Aggregates.group("$token_info.Url_id",Accumulators.max("max_TF",new Document("$multiply",st)))
+		));
+		for (Document doc : links_it) {
+			System.out.println(doc);
+		}
+//		BasicDBObject objectToFind = new BasicDBObject("_id", new BasicDBObject("$in", s));
+//		return Inverted_file.find(objectToFind);//.projection(Projections.exclude("_id"));
+		return links_it;
+	}
 	public void addManyUrlToFrontier(ArrayList<Document> frontier_links) {
 		try {
 
@@ -447,6 +470,10 @@ public class DBController {
 	public ArrayList<Document> get_tokens()
 	{
 		return (ArrayList<Document>)Url_tokens.find();
+	}
+
+	public double getTotalDocsCount() {
+		return Url_tokens.count();
 	}
 
    /* public Document findInQueryFile(String s) {
