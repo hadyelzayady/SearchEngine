@@ -429,15 +429,20 @@ public class DBController {
 		return doc;
 	}
 	
-	public long get_url_cout()
+	public double get_url_cout()
 	{
 		return  Url_tokens.count();
 	}
 	
-	public long get_token_cout(String Token)
+	public double get_token_cout(String Token)
 	{
 		Bson filter=eq("words",Token);
 		return Url_tokens.count(filter);
+	}
+	
+	public ArrayList<Document> get_tokens()
+	{
+		return (ArrayList<Document>)Url_tokens.find();
 	}
 
    /* public Document findInQueryFile(String s) {
