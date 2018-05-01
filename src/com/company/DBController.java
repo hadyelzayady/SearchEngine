@@ -92,19 +92,8 @@ public class DBController {
 
 	public void addUrlToVisited(String url, String checksum) {
 		try {
-			Bson doc = new Document("_id", url);
-			Document old_visited = visited_collection.find(doc).first();
-			if (old_visited != null) {
-				String old_checksum = old_visited.getString("checksum");
-				if (!old_checksum.equals(checksum)) {
-					// System.out.println("inside inner if");
-					Document document = new Document("_id", url).append("checksum", checksum).append("indexed", false);
-					visited_collection.replaceOne(doc, document);
-				}
-			} else {
 				Document document = new Document("_id", url).append("checksum", checksum).append("indexed", false);
 				visited_collection.insertOne(document);
-			}
 		} catch (Exception ex) {
 			System.out.println("add url to visited " + ex);
 		}
