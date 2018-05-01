@@ -19,6 +19,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.nor;
 import static com.mongodb.client.model.Updates.push;
 
 //as froniter is very large and we limited to 5000 somesites may not be crawled
@@ -232,7 +233,23 @@ public class WebCrawler implements Runnable {
 
     private String normalizeLink(String url) {
         String normalized_url = url.replaceAll("#\\S*", "");
-        normalized_url = normalized_url.toLowerCase();
+	    Matcher matcher = url_pattern.matcher(normalized_url);
+	    if (matcher.find()) {
+		    String protocole = matcher.group(1);//protocol
+		    String domain = matcher.group(2);//protocol
+		    String port = matcher.group(3);//protocol
+		    String rest = matcher.group(4);//protocol
+		    if (port == null)
+			    port = "";
+		    normalized_url = protocole.toLowerCase() + domain.toLowerCase() + port + rest;
+	    }
+	    try {
+		    normalized_url = java.net.URLDecoder.decode(normalized_url, "UTF-8");
+	    } catch (Exception ex) {
+
+	    }
+	    if (normalized_url.endsWith("/"))
+		    normalized_url = normalized_url.substring(0, normalized_url.length() - 1);
         return normalized_url;
     }
 
