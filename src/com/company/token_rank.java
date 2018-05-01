@@ -10,14 +10,14 @@ public class token_rank {
 	private String token;
 	private DBController controller = DBController.ContollerInit();
 	private ArrayList<Document> Url_tokens;
-	
+
 	public token_rank(String url,String token)
 	{
 		this.url=url;
 		this.token=token;
 		this.Url_tokens=controller.get_tokens();
 	}
-	
+
 	public double calculate_TF()
 	{
 		double count=0;
@@ -33,7 +33,7 @@ public class token_rank {
 		}
 		return (count/(double)words.size());
 	}
-	
+
 	public double  calculate_IDF()
 	{
 		double count=this.Url_tokens.size();

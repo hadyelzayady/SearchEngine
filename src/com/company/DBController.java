@@ -24,10 +24,7 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Vector;
+import java.util.*;
 
 
 //	List<Document> employees = (List<Document>) collection.find().into(
@@ -148,7 +145,7 @@ public class DBController {
 		}
 	}
 
-	public void AddTOWordFile(String url, ArrayList<String> words)
+	public void AddTOWordFile(String url, Set<String> words)
     {
     	Document document=new Document("_id",url);
 	    document.append("words", words);
@@ -359,15 +356,13 @@ public class DBController {
 
     public void deleteInvertedFile(String link) {
     	Bson filter=eq("_id",link);
-    	FindIterable<Document> docs=Url_tokens.find(filter);
-    	Document doc=docs.first();
-    	String word = null;
+	    Document doc = Url_tokens.find(filter).first();
     	if(doc!=null)
     	{
-    	   word=doc.get("words").toString();
-    	   Bson match = new BasicDBObject("_id",word); // to match your document
+		    ArrayList<String> words = (ArrayList<String>) doc.get("words");
+		    BasicDBObject objectToFind = new BasicDBObject("_id", new BasicDBObject("$in", words));
            BasicDBObject update = new BasicDBObject("token_info", new BasicDBObject("Url_id", link));
-           Inverted_file.updateMany(match, new BasicDBObject("$pull", update));
+		    Inverted_file.updateMany(objectToFind, new BasicDBObject("$pull", update));
     	}
         /*Bson match = new BasicDBObject("_id",word); // to match your document
         BasicDBObject update = new BasicDBObject("token_info", new BasicDBObject("Url_id", link));
@@ -377,6 +372,15 @@ public class DBController {
 /////farah
 
 	public FindIterable<Document> findInInvertedFile(List<String> s) {
+//		AggregateIterable<Document> links_it = Inverted_file.aggregate(Arrays.asList(
+//				Aggregates.match(Filters.eq("_id",s.get(0))),
+////				Aggregates.group("$Domain_FK", Accumulators.first("Priority", "$Priority"), Accumulators.first("url", "$_id"),
+////						Accumulators.first("domain_pr", "$mydomain.Domain_Constraint"),
+////						Accumulators.first("checksum", "$checksum"),
+////						Accumulators.first("Offset", "$Offset")),
+//				Aggregates.unwind("$token_info"),
+//				Aggregates.sort(new Document("token_info.Max_rank", 1))
+//				));
 		BasicDBObject objectToFind = new BasicDBObject("_id", new BasicDBObject("$in", s));
 		return Inverted_file.find(objectToFind);//.projection(Projections.exclude("_id"));
 	}

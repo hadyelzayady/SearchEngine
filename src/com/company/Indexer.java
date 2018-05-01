@@ -1,6 +1,11 @@
 package com.company;
 
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
+import com.mongodb.client.model.UpdateOptions;
+import javafx.geometry.Pos;
 import opennlp.tools.stemmer.Stemmer;
+import org.bson.conversions.Bson;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -10,6 +15,9 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.Vector;
 import java.util.Hashtable;
+
+import static com.mongodb.client.model.Updates.push;
+
 //todo threads
 //todo stemming
 //todo new collection  for stopping words
@@ -24,81 +32,111 @@ public class Indexer implements Runnable {
 		return normalized_url;
 	}
 	public void run() {
-		try
-		{
-			//reading useless words
-            String line;
-			ArrayList<String> stopping_words = new ArrayList<String>(2);
-            FileReader file_out = new FileReader("stopwords_en.txt");
-            BufferedReader bf = new BufferedReader(file_out);
-			  while ((line = bf.readLine()) != null) {
-                stopping_words.add(line);
-            }
-            bf.close();
-            file_out.close();
-            Integer count=1;
-            while(true)
-            {
-            	while(controller.found_unindexed_pages())
-            	{
-            		String[] urlfFilename = controller.getUnIndexedPageUrlFilenameAndSet();
-    				if (urlfFilename == null) {
-    					continue;
-    				}
-		            Hashtable<String, Integer> table = new Hashtable<String, Integer>();
-		            System.out.println("indexing: " + urlfFilename[0]);
-    				File input = new File("Pages/" + urlfFilename[1] + ".html");
-//                        controller.deleteInvertedFile(urlfFilename[0]);
-                        Document doc = Jsoup.parse(input, "UTF-8", urlfFilename[0]);
-                        String body = doc.body().text();
-                        String[] tokens = Tokenizer(body);
-		            ArrayList<String> no_space_tokens = Normalizer(tokens, stopping_words);
-                        controller.AddTOWordFile( urlfFilename[0], no_space_tokens);
-                        for(int i=0;i<no_space_tokens.size();i++)
-                        {
-                        	String temp_key=no_space_tokens.get(i);
-                        	if(table.containsKey(temp_key))
-                        	{
-                        		int value=table.get(temp_key).intValue();
 
-		                        table.replace(temp_key, value, ++value);
-                        	}
-                        	else
-                        		table.put(temp_key, count);
-                        }
-                        //controller.AddTOWordFile( urlfFilename[0], no_space_tokens);
-                        System.out.println("passed Inverted file2");
-                        Elements headers = doc.select("h1,h2,h3,h4,h5,h6");
-		            ArrayList<String> no_space_headers;
-                        String tag;
-                        for (Element header : headers) {
-                            tag = header.tagName().toLowerCase();
-                            String header_name = header.text();
-                            String[] header_tokens = Tokenizer(header_name);
-                            no_space_headers = Normalizer(header_tokens,stopping_words);
-                            for (int i = 0; i < no_space_headers.size(); i++) {
-                                Token_info temp_token = new Token_info(no_space_headers.get(i),
-                                		urlfFilename[0], tag, i);
-                                controller.AddToInvertedFile(temp_token, "Url_id", "Position", "Type");
-                                no_space_tokens.remove(temp_token.get_token_name());
-                            }
-                        }
-		            // System.out.println("finshed indexing: " + urlfFilename[0]);
-    					for (int i = 0; i < no_space_tokens.size(); i++) {
-    						Token_info temp_token = new Token_info(no_space_tokens.get(i), urlfFilename[0], "text", i);
-    						controller.AddToInvertedFile(temp_token, "Url_id", "Position", "Type");
-    					}
-		            controller.setIndexed(urlfFilename[0]);
-		            //System.out.println("after add to inverted");
-            	}
-            }
+		//reading useless words
+		ArrayList<String> stopping_words = new ArrayList<>();
+		try {
+			String line;
+			stopping_words = new ArrayList<String>(2);
+			FileReader file_out = new FileReader("stopwords_en.txt");
+			BufferedReader bf = new BufferedReader(file_out);
+			while ((line = bf.readLine()) != null) {
+				stopping_words.add(line);
+			}
+			bf.close();
+			file_out.close();
+		} catch (Exception ex) {
+			System.out.println("opening stopping words " + ex);
 		}
-		catch (Exception ex)
-		{
-			System.out.println(ex);
-		}	
-	}
+		while (true) {
+			try {
+				while (controller.found_unindexed_pages()) {
+					String[] urlfFilename = controller.getUnIndexedPageUrlFilenameAndSet();
+					if (urlfFilename == null) {
+						continue;
+					}
+					Integer count = 1;
+					Hashtable<String, Integer> table = new Hashtable<String, Integer>();
+					Hashtable<String, ArrayList<org.bson.Document>> Pos_type_table = new Hashtable<String, ArrayList<org.bson.Document>>();
+					Hashtable<String, Integer> max_word_rank_table = new Hashtable<String, Integer>();
+					System.out.println("indexing: " + urlfFilename[0]);
+					File input = new File("Pages/" + urlfFilename[1] + ".html");
+					controller.deleteInvertedFile(urlfFilename[0]);
+					Document doc = Jsoup.parse(input, "UTF-8", urlfFilename[0]);
+					Elements body = doc.getAllElements().select(":not(head)");
+					int pos = 0;
+					for (Element element : body) {
+						if (!element.tagName().equals("script")) {
+							String text = element.ownText();
+							String[] tokens = Tokenizer(text);
+							ArrayList<String> normalized_words = Normalizer(tokens, stopping_words);
+							int tag_rank;
+							if (!normalized_words.isEmpty()) {
+								if (element.tagName().equals("h1") || element.parents().is("h1")) {
+									tag_rank = 1;
+								} else if (element.tagName().equals("h2") || element.parents().is("h2")) {
+									tag_rank = 2;
 
+								} else if (element.tagName().equals("h3") || element.parents().is("h3")) {
+									tag_rank = 3;
+
+								} else if (element.tagName().equals("h4") || element.parents().is("h4")) {
+									tag_rank = 4;
+
+								} else if (element.tagName().equals("h5") || element.parents().is("h5")) {
+									tag_rank = 5;
+
+								} else if (element.tagName().equals("h6") || element.parents().is("h6")) {
+									tag_rank = 6;
+
+								} else {
+									tag_rank = 7;
+								}
+								for (String word : normalized_words) {
+									pos++;
+									org.bson.Document pos_type_doc = new org.bson.Document("Position", pos).append("Tag_rank", tag_rank);
+									if (Pos_type_table.containsKey(word)) {
+										Pos_type_table.get(word).add(pos_type_doc);
+										int value = table.get(word).intValue();
+										table.replace(word, value, ++value);
+										if (max_word_rank_table.get(word) > tag_rank) {
+											max_word_rank_table.put(word, tag_rank);
+										}
+
+									} else {
+										ArrayList<org.bson.Document> temp = new ArrayList<org.bson.Document>();
+										temp.add(pos_type_doc);
+										Pos_type_table.put(word, temp);
+										table.put(word, 1);
+										max_word_rank_table.put(word, tag_rank);
+									}
+								}
+							}
+						}
+					}
+					for (String word : Pos_type_table.keySet()
+							) {
+						ArrayList<org.bson.Document> tokens_arr = Pos_type_table.get(word);
+						org.bson.Document link_doc = new org.bson.Document("Url_id", urlfFilename[0]).append("Position_type", tokens_arr).append("NormalizedTF", table.get(word) / (double) doc.body().text().length());
+						link_doc.append("Max_rank", max_word_rank_table.get(word));
+						org.bson.Document modifiedObject = new org.bson.Document();
+						modifiedObject.put("$push", new BasicDBObject("token_info", link_doc));
+						try {
+							controller.Inverted_file.updateOne(new BasicDBObject("_id", word), modifiedObject, new UpdateOptions().upsert(true));
+						} catch (Exception ex) {
+							System.out.println("error in adding word to inverted file: " + ex);
+						}
+
+					}
+					controller.AddTOWordFile(urlfFilename[0], table.keySet());
+					controller.setIndexed(urlfFilename[0]);
+					System.out.println("finished indexing:" + urlfFilename[0]);
+				}
+			} catch (Exception ex) {
+				System.out.println(ex);
+			}
+		}
+	}
 	public static String[] Tokenizer(String body)
 	{
 		return body.split("\\s");

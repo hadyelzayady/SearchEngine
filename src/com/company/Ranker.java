@@ -40,10 +40,10 @@ public class Ranker {
 	{
 		return this.popular_urls;
 	}
-	
+
 	public double[] get_ranks()
 	{
 		return this.ranked_urls;
 	}
-	
+
 }
