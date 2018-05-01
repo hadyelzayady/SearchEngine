@@ -25,6 +25,7 @@ import static com.mongodb.client.model.Updates.push;
 //todo domain restriction
 //todo link_db
 //TODO  password forget is chnaged every time as different token is assigned
+//todo use $addtoset for linkdb
 public class WebCrawler implements Runnable {
 
     private DBController controller;

@@ -39,30 +39,43 @@ public class QProcessor implements Runnable  {
 
     public void run() {
 	    ArrayList<String> Urls = new ArrayList<>(2);
-    	String out="test.txt";
-    	try {
-			FileWriter file_out=new FileWriter(out);
+	    String out = "test.txt";
+//	    try {
+//		    FileWriter file_out = new FileWriter(out);
 //    	for(int i=0;i<normalized.size();i++)
 //    	{
 //
 		    FindIterable<Document> result = controller.findInInvertedFile(normalized);
-		    ArrayList<Document> ds = (ArrayList<Document>) result.first().get("token_info");
-		    System.out.println(result.first().getString("_id"));
-		    for (Document doc : ds) {
-			    System.out.println(doc.get("Url_id"));
+	    ArrayList<String> urls = new ArrayList<String>();
+	    for (Document doc : result) {
+		    System.out.println(doc);
+		    ArrayList<Document> docs = (ArrayList<Document>) doc.get("token_info");
+		    for (Document doc2 : docs) {
+			    urls.add(doc2.getString("Url_id"));
 		    }
-    	for (int i=0;i<Urls.size();i++)
-    	{
-    		file_out.write(Urls.get(i));
-    	}
-    	file_out.close();
-    	}
-    	 catch (IOException e) {
- 			// TODO Auto-generated catch block
- 			e.printStackTrace();
- 		}
+	    }
+	    double[] h = new Ranker(urls, normalized).get_ranks();
+	    for (int i = 0; i < h.length; i++) {
+		    System.out.println(h[i] + "  :" + urls.get(i));
+	    }
+//		    ArrayList<Document> ds = (ArrayList<Document>) result;
+//		    for (Document doc : ds) {
+//			    System.out.println(doc.get("Url_id"));
+//		    }
+//		    new Ranker()
+//    	for (int i=0;i<Urls.size();i++)
+//    	{
+//    		file_out.write(Urls.get(i));
+//    	}
+//    	file_out.close();
+//    	}
+//    	 catch (IOException e) {
+// 			// TODO Auto-generated catch block
+// 			e.printStackTrace();
+// 		}
         /*Document result1 = controller.findInInvertedFile(normalized.get(0));
         controller.queryResult_collection.insertOne(result1);*/
+//    }
     }
 }
 
