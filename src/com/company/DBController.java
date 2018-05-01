@@ -372,6 +372,15 @@ public class DBController {
 /////farah
 
 	public FindIterable<Document> findInInvertedFile(List<String> s) {
+//		AggregateIterable<Document> links_it = Inverted_file.aggregate(Arrays.asList(
+//				Aggregates.match(Filters.eq("_id",s.get(0))),
+////				Aggregates.group("$Domain_FK", Accumulators.first("Priority", "$Priority"), Accumulators.first("url", "$_id"),
+////						Accumulators.first("domain_pr", "$mydomain.Domain_Constraint"),
+////						Accumulators.first("checksum", "$checksum"),
+////						Accumulators.first("Offset", "$Offset")),
+//				Aggregates.unwind("$token_info"),
+//				Aggregates.sort(new Document("token_info.Max_rank", 1))
+//				));
 		BasicDBObject objectToFind = new BasicDBObject("_id", new BasicDBObject("$in", s));
 		return Inverted_file.find(objectToFind);//.projection(Projections.exclude("_id"));
 	}

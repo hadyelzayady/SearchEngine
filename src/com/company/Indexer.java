@@ -58,11 +58,12 @@ public class Indexer implements Runnable {
 					Integer count = 1;
 					Hashtable<String, Integer> table = new Hashtable<String, Integer>();
 					Hashtable<String, ArrayList<org.bson.Document>> Pos_type_table = new Hashtable<String, ArrayList<org.bson.Document>>();
+					Hashtable<String, Integer> max_word_rank_table = new Hashtable<String, Integer>();
 					System.out.println("indexing: " + urlfFilename[0]);
 					File input = new File("Pages/" + urlfFilename[1] + ".html");
 					controller.deleteInvertedFile(urlfFilename[0]);
 					Document doc = Jsoup.parse(input, "UTF-8", urlfFilename[0]);
-					Elements body = doc.body().getAllElements();
+					Elements body = doc.getAllElements().select(":not(head)");
 					int pos = 0;
 					for (Element element : body) {
 						if (!element.tagName().equals("script")) {
@@ -96,26 +97,28 @@ public class Indexer implements Runnable {
 									org.bson.Document pos_type_doc = new org.bson.Document("Position", pos).append("Tag_rank", tag_rank);
 									if (Pos_type_table.containsKey(word)) {
 										Pos_type_table.get(word).add(pos_type_doc);
+										int value = table.get(word).intValue();
+										table.replace(word, value, ++value);
+										if (max_word_rank_table.get(word) > tag_rank) {
+											max_word_rank_table.put(word, tag_rank);
+										}
 
 									} else {
 										ArrayList<org.bson.Document> temp = new ArrayList<org.bson.Document>();
 										temp.add(pos_type_doc);
 										Pos_type_table.put(word, temp);
+										table.put(word, 1);
+										max_word_rank_table.put(word, tag_rank);
 									}
-									if (table.containsKey(word)) {
-										int value = table.get(word).intValue();
-										table.replace(word, value, ++value);
-									} else
-										table.put(word, count);
 								}
 							}
 						}
 					}
-					ArrayList<org.bson.Document> words_docs = new ArrayList<>();
 					for (String word : Pos_type_table.keySet()
 							) {
 						ArrayList<org.bson.Document> tokens_arr = Pos_type_table.get(word);
-						org.bson.Document link_doc = new org.bson.Document("Url_id", urlfFilename[0]).append("Position_type", tokens_arr).append("TF", table.get(word));
+						org.bson.Document link_doc = new org.bson.Document("Url_id", urlfFilename[0]).append("Position_type", tokens_arr).append("NormalizedTF", table.get(word) / (double) doc.body().text().length());
+						link_doc.append("Max_rank", max_word_rank_table.get(word));
 						org.bson.Document modifiedObject = new org.bson.Document();
 						modifiedObject.put("$push", new BasicDBObject("token_info", link_doc));
 						try {
