@@ -364,7 +364,7 @@ public class DBController {
 
 /////farah
 
-	public FindIterable<Document> findInInvertedFile(List<String> s) {
+	public AggregateIterable<Document> findInInvertedFile(List<String> s) {
 //		String [] st={"$TF","-1"};
 		AggregateIterable<Document> links_it = Inverted_file.aggregate(Arrays.asList(
 //				Aggregates.group("$Url_id"), Accumulators.first("Priority", "$Priority"), Accumulators.first("url", "$_id"),
@@ -372,15 +372,16 @@ public class DBController {
 //						Accumulators.first("checksum", "$checksum"),
 //						Accumulators.first("Offset", "$Offset")),
 				Aggregates.match(Filters.in("_id", s)),
-				Aggregates.lookup("Url_tokens", "token_info.Url_id", "_id", "link_words"),
-				Aggregates.project(Projections.exclude("link_words.words"))
+				Aggregates.lookup("Frontier", "token_info.Url_id", "_id", "page_rank"),
+				Aggregates.project(Projections.exclude("link_words.words", "page_rank.Visited", "page_rank.Priority", "page_rank.Domain_FK", "page_rank.Offset"))//todo complete
 //				Aggregates.group("$token_info.Url_id",Accumulators.max("max_TF",new Document("$multiply",st)))
 		));
 		for (Document doc : links_it) {
 			System.out.println(doc);
 		}
-		BasicDBObject objectToFind = new BasicDBObject("_id", new BasicDBObject("$in", s));
-		return Inverted_file.find(objectToFind);//.projection(Projections.exclude("_id"));
+//		BasicDBObject objectToFind = new BasicDBObject("_id", new BasicDBObject("$in", s).append("$lookup","",""));
+//		FindIterable<Document> h = Inverted_file.find(objectToFind);
+		return links_it;//.projection(Projections.exclude("_id"));
 //		return links_it;
 	}
 
@@ -489,6 +490,42 @@ public class DBController {
 			System.out.println(doc);
 		}
 		return null;
+	}
+
+	public void popularityCacl() {
+		AggregateIterable<Document> h = linkdatabase_collection.aggregate(Arrays.asList(
+				Aggregates.match(Filters.exists("innerLinks"))
+				//	Aggregates.lookup("Frontier", "token_info.Url_id", "_id", "link_words")
+				//			Aggregates.group("$token_info.Url_id", Accumulators.first("link_words", "$link_words"), Accumulators.first("Position_type", "$token_info.Position_type"), Accumulators.sum("count", 1))
+		));
+		double rank = .15;
+		String id;
+		for (Document doc : h) {
+			ArrayList<String> inn_links = (ArrayList<String>) doc.get("innerLinks");
+			id = doc.getString("_id");
+			for (String link : inn_links) {
+				rank += .85 * (calcinLink(link));
+			}
+			Bson filter = new Document("_id", id);
+			Bson newValue = new Document("rank", rank);
+			Bson updateOperationDocument = new Document("$set", newValue);
+			frontier_collection.updateOne(filter, updateOperationDocument);
+			System.out.println(doc);
+		}
+	}
+
+	public double calcinLink(String link) {
+		double rank;
+		double outer_links;
+		Document h = frontier_collection.aggregate(Arrays.asList(
+				Aggregates.match(Filters.eq("_id", link)),
+				Aggregates.lookup("Link_db", "_id", "_id", "link_outers")
+				//	Aggregates.lookup("Frontier", "token_info.Url_id", "_id", "link_words")
+				//			Aggregates.group("$token_info.Url_id", Accumulators.first("link_words", "$link_words"), Accumulators.first("Position_type", "$token_info.Position_type"), Accumulators.sum("count", 1))
+		)).first();
+		rank = h.getDouble("rank");
+		outer_links = ((ArrayList<Document>) h.get("link_outers")).get(0).getInteger("outLinks");
+		return rank / outer_links;
 	}
 
    /* public Document findInQueryFile(String s) {

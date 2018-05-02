@@ -2,6 +2,7 @@ package com.company;
 
 import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.FindIterable;
+import com.mongodb.client.model.Projections;
 import org.bson.*;
 
 import javax.print.Doc;
@@ -11,11 +12,11 @@ import static java.lang.Math.log;
 
 public class Ranker {
 	private ArrayList<Document> popular_urls;
-	private FindIterable<Document> words_urls;
+	private AggregateIterable<Document> words_urls;
 	private ArrayList<Document> ranked_urls;
 	double total_docs;
 
-	public Ranker(FindIterable<Document> urls_comming, double total_docs) {
+	public Ranker(AggregateIterable<Document> urls_comming, double total_docs) {
 		this.words_urls = urls_comming;
 		this.total_docs = total_docs;
 		//this.popular_urls=Popular_pages(ranked_urls);
@@ -25,12 +26,15 @@ public class Ranker {
 		Hashtable<String, Double> url_rank_table = new Hashtable<String, Double>();
 		for (Document word_url : words_urls) {
 			ArrayList<Document> word_urls = (ArrayList<Document>) word_url.get("token_info");
+			ArrayList<Document> pop_ranks = (ArrayList<Document>) word_url.get("page_rank");
 			double IDF = log(total_docs / (double) word_urls.size());
 			for (Document link_doc : word_urls) {
 				String url = link_doc.getString("Url_id");
 				double TF = link_doc.getDouble("NormalizedTF");
+				double pop_rank = getRank(url, pop_ranks);
+//				double page_rank=ranks.get()
 				double tag_rank = link_doc.getInteger("Max_rank");
-				double rank = IDF * TF * tag_rank;
+				double rank = IDF * TF * tag_rank * pop_rank;
 				if (url_rank_table.containsKey(url)) {
 					url_rank_table.put(url, url_rank_table.get(url) + rank);
 				} else {
@@ -57,6 +61,15 @@ public class Ranker {
 		}
 		ArrayList<String> l = sortByValues(url_rank_table);
 		return l;
+	}
+
+	private double getRank(String url, ArrayList<Document> pop_ranks) {
+		for (Document doc : pop_ranks) {
+			if (doc.getString("_id").equals(url)) {
+				return doc.getDouble("rank");
+			}
+		}
+		return 0;
 	}
 
 	private static ArrayList<String> sortByValues(Hashtable map) {
