@@ -9,6 +9,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
@@ -51,10 +52,18 @@ public class QProcessor implements Runnable  {
 //    	{
 //
 	    FindIterable<Document> result = controller.findInInvertedFile(normalized);
+//	    FindIterable<Document> result = controller.FindPhraseSearching(normalized);
+//	    filterByPosition(result);
 	    double total_docs = controller.getTotalDocsCount();
 	    Ranker r = new Ranker(result, total_docs);
-	    List<Document> sorted_links = r.rank_pages();
-	    ArrayList<String> urls = new ArrayList<String>();
+	    ArrayList<String> sorted_links = r.rank_pages();
+	    for (String link : sorted_links) {
+		    Object file_name = result.filter(new Document("_id", "author")).first();
+		    System.out.println(file_name);
+	    }
+//	    result.filter("")
+
+//	    ArrayList
 //	    for (Document doc : result) {
 //		    System.out.println(doc);
 //		    ArrayList<Document> docs = (ArrayList<Document>) doc.get("token_info");
@@ -85,5 +94,11 @@ public class QProcessor implements Runnable  {
         controller.queryResult_collection.insertOne(result1);*/
 //    }
     }
+
+	private void filterByPosition(FindIterable<Document> result) {
+		for (Document doc : result) {
+			System.out.println(doc);
+		}
+	}
 }
 

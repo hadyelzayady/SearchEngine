@@ -1,5 +1,7 @@
 package com.company;
 
+import com.mongodb.BasicDBObject;
+import com.mongodb.client.model.UpdateOptions;
 import org.bson.conversions.Bson;
 import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
@@ -209,8 +211,15 @@ public class WebCrawler implements Runnable {
 			Matcher matcher = url_pattern.matcher(norm_link);
 			if (matcher.find()) {
 				String domain = matcher.group(2);//protocol + domain as in join with frontier we can join
-				org.bson.Document document = new org.bson.Document("_id", norm_link).append("Visited", false).append("Priority", 2).append("Domain_FK", domain);
+				org.bson.Document document = new org.bson.Document("_id", norm_link).append("Visited", false).append("Priority", 2).append("Domain_FK", domain).append("rank", 1);
 				org.bson.Document domain_doc = new org.bson.Document("Domain", domain).append("Domain_Constraint", 0);
+				org.bson.Document modifiedObject = new org.bson.Document();
+				modifiedObject.put("$addToSet", new BasicDBObject("innerLinks", url));
+				try {
+					controller.linkdatabase_collection.updateOne(new BasicDBObject("_id", norm_link), modifiedObject, new UpdateOptions().upsert(true));
+				} catch (Exception ex) {
+					System.out.println("error in adding word to inverted file: " + ex);
+				}
 				frontier_links.add(document);
 				domain_links.add(domain_doc);
 				out_links.add(norm_link);

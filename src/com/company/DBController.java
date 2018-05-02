@@ -10,14 +10,18 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.*;
 import static com.mongodb.client.model.Projections.*;
 
+import com.mongodb.operation.AggregateOperation;
 import com.mongodb.util.JSON;
 import com.mongodb.connection.QueryResult;
+import javafx.beans.binding.SetExpression;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import com.company.Token_info;
 import static com.mongodb.client.model.Filters.*;
 import static com.mongodb.client.model.Updates.*;
 import com.mongodb.client.MongoCursor;
+import org.springframework.data.mongodb.core.aggregation.AggregationExpression;
+import org.springframework.data.mongodb.core.aggregation.AggregationOperationContext;
 
 import javax.print.Doc;
 import java.io.BufferedWriter;
@@ -134,9 +138,9 @@ public class DBController {
 		}
 	}
 
-	public void AddTOWordFile(String url, Set<String> words)
+	public void AddTOWordFile(String url, Set<String> words, String checksum)
     {
-    	Document document=new Document("_id",url);
+	    Document document = new Document("_id", url).append("checksum", checksum);
 	    document.append("words", words);
 	    BasicDBObject query = new BasicDBObject();
 	    query.put("_id", url);
@@ -362,18 +366,19 @@ public class DBController {
 
 	public FindIterable<Document> findInInvertedFile(List<String> s) {
 //		String [] st={"$TF","-1"};
-//		AggregateIterable<Document> links_it = Inverted_file.aggregate(Arrays.asList(
-////				Aggregates.group("$Url_id"), Accumulators.first("Priority", "$Priority"), Accumulators.first("url", "$_id"),
-////						Accumulators.first("domain_pr", "$mydomain.Domain_Constraint"),
-////						Accumulators.first("checksum", "$checksum"),
-////						Accumulators.first("Offset", "$Offset")),
-//				Aggregates.unwind("$token_info"),
-//				Aggregates.match(Filters.in("_id",s))
-////				Aggregates.group("$token_info.Url_id",Accumulators.max("max_TF",new Document("$multiply",st)))
-//				));
-//		for (Document doc:links_it) {
-//			System.out.println(doc);
-//		}
+		AggregateIterable<Document> links_it = Inverted_file.aggregate(Arrays.asList(
+//				Aggregates.group("$Url_id"), Accumulators.first("Priority", "$Priority"), Accumulators.first("url", "$_id"),
+//						Accumulators.first("domain_pr", "$mydomain.Domain_Constraint"),
+//						Accumulators.first("checksum", "$checksum"),
+//						Accumulators.first("Offset", "$Offset")),
+				Aggregates.match(Filters.in("_id", s)),
+				Aggregates.lookup("Url_tokens", "token_info.Url_id", "_id", "link_words"),
+				Aggregates.project(Projections.exclude("link_words.words"))
+//				Aggregates.group("$token_info.Url_id",Accumulators.max("max_TF",new Document("$multiply",st)))
+		));
+		for (Document doc : links_it) {
+			System.out.println(doc);
+		}
 		BasicDBObject objectToFind = new BasicDBObject("_id", new BasicDBObject("$in", s));
 		return Inverted_file.find(objectToFind);//.projection(Projections.exclude("_id"));
 //		return links_it;
@@ -463,6 +468,27 @@ public class DBController {
 
 	public double getTotalDocsCount() {
 		return Url_tokens.count();
+	}
+
+	public FindIterable<Document> FindPhraseSearching(ArrayList<String> normalized) {
+		AggregateIterable<Document> links_it = Inverted_file.aggregate(Arrays.asList(
+//				Aggregates.group("$Url_id"), Accumulators.first("Priority", "$Priority"), Accumulators.first("url", "$_id"),
+//						Accumulators.first("domain_pr", "$mydomain.Domain_Constraint"),
+//						Accumulators.first("checksum", "$checksum"),
+//						Accumulators.first("Offset", "$Offset")),
+				Aggregates.match(Filters.in("_id", normalized)),
+				Aggregates.unwind("$token_info"),
+				Aggregates.lookup("Url_tokens", "token_info.Url_id", "_id", "link_words"),
+				Aggregates.group("$token_info.Url_id", Accumulators.first("link_words", "$link_words"), Accumulators.first("Position_type", "$token_info.Position_type"), Accumulators.sum("count", 1)),
+				Aggregates.match(Filters.eq("count", normalized.size()))
+//				Aggregates.unwind("$link_words")
+//				Aggregates.match(Filters.elemMatch("link_words,words",Filters.eq("comment")))
+//				Aggregates.group("$token_info.Url_id",Accumulators.max("max_TF",new Document("$multiply",st)))
+		));
+		for (Document doc : links_it) {
+			System.out.println(doc);
+		}
+		return null;
 	}
 
    /* public Document findInQueryFile(String s) {

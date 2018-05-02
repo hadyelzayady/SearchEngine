@@ -129,7 +129,7 @@ public class Indexer implements Runnable {
 						}
 
 					}
-					controller.AddTOWordFile(urlfFilename[0], table.keySet());
+					controller.AddTOWordFile(urlfFilename[0], table.keySet(), urlfFilename[1]);
 					controller.setIndexed(urlfFilename[0]);
 					System.out.println("finished indexing:" + urlfFilename[0]);
 				}

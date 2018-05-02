@@ -21,7 +21,7 @@ public class Ranker {
 		//this.popular_urls=Popular_pages(ranked_urls);
 	}
 
-	public List<Document> rank_pages() {
+	public ArrayList<String> rank_pages() {
 		Hashtable<String, Double> url_rank_table = new Hashtable<String, Double>();
 		for (Document word_url : words_urls) {
 			ArrayList<Document> word_urls = (ArrayList<Document>) word_url.get("token_info");
@@ -55,11 +55,11 @@ public class Ranker {
 //				url_rank_table.put(url,rank);
 //			}
 		}
-		List l = sortByValues(url_rank_table);
-		return null;
+		ArrayList<String> l = sortByValues(url_rank_table);
+		return l;
 	}
 
-	private static List sortByValues(Hashtable map) {
+	private static ArrayList<String> sortByValues(Hashtable map) {
 		List list = new LinkedList(map.entrySet());
 		// Defined Custom Comparator here
 		Collections.sort(list, new Comparator() {
@@ -68,7 +68,6 @@ public class Ranker {
 						.compareTo(((Map.Entry) (o1)).getValue());
 			}
 		});
-
 		// Here I am copying the sorted list in HashMap
 		// using LinkedHashMap to preserve the insertion order
 		HashMap sortedHashMap = new LinkedHashMap();
@@ -76,8 +75,8 @@ public class Ranker {
 			Map.Entry entry = (Map.Entry) it.next();
 			sortedHashMap.put(entry.getKey(), entry.getValue());
 		}
-		System.out.println(sortedHashMap);
-		return list;
+		ArrayList<String> h = new ArrayList<String>(sortedHashMap.keySet());
+		return h;
 	}
 	/*private ArrayList<String>Popular_pages(long[] ranks_input)
 	{

@@ -44,7 +44,7 @@ public class Main {
 //            e.printStackTrace();
 //        }
 		new Thread(new CrawlerMain(num_of_threads)).start();
-		new Thread(new Indexer()).start();
-//		new Thread(new QProcessor("pc facebook currentpag special mac  ")).start();
+//		new Thread(new Indexer()).start();
+//		new Thread(new QProcessor("comment template copyrights hase author hello")).start();
 	}
 }
