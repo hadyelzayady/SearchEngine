@@ -22,24 +22,31 @@ public class QProcessor implements Runnable  {
     private DBController controller = DBController.ContollerInit();
     private String[] tokenized;
 	private ArrayList<String> normalized;
+	private int offset;
 
     String line;
 	ArrayList<String> stopping_words = new ArrayList<String>(2);
     FileReader file_out = new FileReader("stopwords_en.txt");
     BufferedReader bf = new BufferedReader(file_out);
 
-    QProcessor(String searchQuery) throws IOException {
+    QProcessor(String searchQuery,int offset) throws IOException {
 
         while ((line = bf.readLine()) != null) {
             stopping_words.add(line);
         }
         bf.close();
         file_out.close();
-
-
+        this.offset=offset;
         tokenized = Indexer.Tokenizer(searchQuery);
         normalized = Indexer.Normalizer(tokenized,stopping_words);
 
+    }
+    
+    public int min(int num1,int num2)
+    {
+    	if(num1<num2)
+    		return num1;
+    	return num2;
     }
 
 
@@ -57,7 +64,8 @@ public class QProcessor implements Runnable  {
 	    double total_docs = controller.getTotalDocsCount();
 	    Ranker r = new Ranker(result, total_docs);
 	    ArrayList<String> sorted_links = r.rank_pages();
-	    for (String link : sorted_links) {
+	    int min_size=min((this.offset*10)+9,sorted_links.size());
+	   for(int i=(this.offset*10);i<min_size;i++) {
 		    Object file_name = result.filter(new Document("_id", "author")).first();
 		    System.out.println(file_name);
 	    }
