@@ -66,7 +66,7 @@ public class QProcessor implements Runnable  {
 	    ArrayList<String> sorted_links = r.rank_pages();
 	    int min_size=min((this.offset*10)+9,sorted_links.size());
 	   for(int i=(this.offset*10);i<=min_size;i++) {
-		    System.out.println(file_name);
+//		    System.out.println(file_name);
 	    }
 //	    result.filter("")
 
