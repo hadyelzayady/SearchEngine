@@ -32,7 +32,7 @@ import static com.mongodb.client.model.Updates.push;
 public class WebCrawler implements Runnable {
 
     private DBController controller;
-	private final int crawler_limit = 300;
+	private final int crawler_limit = 20;
     private static final AtomicLong number_crawled = new AtomicLong(0);
 	private static final AtomicInteger next = new AtomicInteger(0);
 	final private int lowest_priority = 100;
@@ -42,8 +42,6 @@ public class WebCrawler implements Runnable {
 	private boolean otherIsFilling = false;
     WebCrawler() {
         controller = DBController.ContollerInit();
-	    for (int i = 0; i < 10; i++)
-		    controller.popularityCacl();
 	    long visited_count = controller.getVisitedCount();
 	    if (0 < visited_count && visited_count < crawler_limit)//interrupt happened
         {
@@ -54,6 +52,7 @@ public class WebCrawler implements Runnable {
             controller.resetRobotStatus();
 //		    controller.resetVisited();
             number_crawled.set(0);
+
         }
 	    arrayInit();
     }
@@ -69,8 +68,12 @@ public class WebCrawler implements Runnable {
     public void recrawlreset() {
         iter++;
         controller.resetFrontier();
-	    controller.popularityCacl();
+//        for (int i=0;i<50;i++)
+//        {
+//	        controller.popularityCacl();
+//        }
 //        controller.resetVisited();
+	    controller.popularityCacl();
         number_crawled.set(0);
         controller.resetRobotStatus();
     }
@@ -226,7 +229,7 @@ public class WebCrawler implements Runnable {
 				}
 				frontier_links.add(document);
 				domain_links.add(domain_doc);
-				out_links.add(norm_link);
+//				out_links.add(norm_link);
 				//innerlink
 				//org.bson.Document pointed_link= new org.bson.Document("_id",norm_link);//for  innerlink
 				//org.bson.Document push_op=new org.bson.Document("$push",new_link);
@@ -241,7 +244,7 @@ public class WebCrawler implements Runnable {
 		controller.addManyUrlToFrontier(frontier_links);
 		controller.addManyDomain(domain_links);
 		//controller.addInnLink(in_link);
-//		controller.linkdbAddOutLinks(url,out_links);
+//		controller.linkdbAddOutLinks(url,out_links.size());
     }
 
     private String normalizeLink(String url) {

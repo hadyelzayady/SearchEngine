@@ -336,10 +336,10 @@ public class DBController {
 	}
 
 	public void linkdbAddOutLinks(String url, int size) {
-		Document newValue = new Document("outLinks", size);
-		BasicDBObject query = new BasicDBObject();
-		query.put("_id", url);
-		linkdatabase_collection.replaceOne(query, newValue, new UpdateOptions().upsert(true));
+		Bson filter = new Document("_id", url);
+		Bson newValue = new Document("outLinks", size);
+		Bson updateOperationDocument = new Document("$set", newValue);
+		linkdatabase_collection.updateOne(filter, updateOperationDocument, new UpdateOptions().upsert(true));
 	}
 
 	public void addInnLink(ArrayList<Document> links) {
@@ -376,9 +376,9 @@ public class DBController {
 				Aggregates.project(Projections.exclude("link_words.words", "page_rank.Visited", "page_rank.Priority", "page_rank.Domain_FK", "page_rank.Offset"))//todo complete
 //				Aggregates.group("$token_info.Url_id",Accumulators.max("max_TF",new Document("$multiply",st)))
 		));
-		for (Document doc : links_it) {
-			System.out.println(doc);
-		}
+//		for (Document doc : links_it) {
+//			System.out.println(doc);
+//		}
 //		BasicDBObject objectToFind = new BasicDBObject("_id", new BasicDBObject("$in", s).append("$lookup","",""));
 //		FindIterable<Document> h = Inverted_file.find(objectToFind);
 		return links_it;//.projection(Projections.exclude("_id"));
@@ -396,9 +396,9 @@ public class DBController {
 				Aggregates.match(Filters.in("_id", s))
 //				Aggregates.group("$token_info.Url_id",Accumulators.max("max_TF",new Document("$multiply",st)))
 		));
-		for (Document doc : links_it) {
-			System.out.println(doc);
-		}
+//		for (Document doc : links_it) {
+//			System.out.println(doc);
+//		}
 //		BasicDBObject objectToFind = new BasicDBObject("_id", new BasicDBObject("$in", s));
 //		return Inverted_file.find(objectToFind);//.projection(Projections.exclude("_id"));
 		return links_it;
@@ -409,7 +409,7 @@ public class DBController {
 			//ordered = false to continue inserting rest of docs if duplicate key exception happens
 			frontier_collection.insertMany(frontier_links, new InsertManyOptions().ordered(false));//TODO use async driver in insertion and update
 		} catch (Exception e) {
-
+			System.out.println("duplicate exception in addManyUrlToFrontier ,it is ok " + e);
 		}
 	}
 
@@ -498,9 +498,10 @@ public class DBController {
 				//	Aggregates.lookup("Frontier", "token_info.Url_id", "_id", "link_words")
 				//			Aggregates.group("$token_info.Url_id", Accumulators.first("link_words", "$link_words"), Accumulators.first("Position_type", "$token_info.Position_type"), Accumulators.sum("count", 1))
 		));
-		double rank = .15;
+
 		String id;
 		for (Document doc : h) {
+			double rank = .15;
 			ArrayList<String> inn_links = (ArrayList<String>) doc.get("innerLinks");
 			id = doc.getString("_id");
 			for (String link : inn_links) {
@@ -510,7 +511,7 @@ public class DBController {
 			Bson newValue = new Document("rank", rank);
 			Bson updateOperationDocument = new Document("$set", newValue);
 			frontier_collection.updateOne(filter, updateOperationDocument);
-			System.out.println(doc);
+//			System.out.println(doc);
 		}
 	}
 
@@ -524,7 +525,10 @@ public class DBController {
 				//			Aggregates.group("$token_info.Url_id", Accumulators.first("link_words", "$link_words"), Accumulators.first("Position_type", "$token_info.Position_type"), Accumulators.sum("count", 1))
 		)).first();
 		rank = h.getDouble("rank");
-		outer_links = ((ArrayList<Document>) h.get("link_outers")).get(0).getInteger("outLinks");
+
+		Document link_outers = ((ArrayList<Document>) h.get("link_outers")).get(0);
+
+		outer_links = link_outers.getInteger("outLinks");
 		return rank / outer_links;
 	}
 

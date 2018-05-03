@@ -57,10 +57,10 @@ public class QProcessor implements Runnable  {
 	    double total_docs = controller.getTotalDocsCount();
 	    Ranker r = new Ranker(result, total_docs);
 	    ArrayList<String> sorted_links = r.rank_pages();
-//	    for (String link : sorted_links) {
+	    for (String link : sorted_links) {
 //		    Object file_name = result.filter(new Document("_id", "author")).first();
-//		    System.out.println(file_name);
-//	    }
+		    System.out.println(link);
+	    }
 //	    result.filter("")
 
 //	    ArrayList

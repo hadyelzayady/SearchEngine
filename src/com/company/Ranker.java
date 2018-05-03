@@ -32,7 +32,6 @@ public class Ranker {
 				String url = link_doc.getString("Url_id");
 				double TF = link_doc.getDouble("NormalizedTF");
 				double pop_rank = getRank(url, pop_ranks);
-//				double page_rank=ranks.get()
 				double tag_rank = link_doc.getInteger("Max_rank");
 				double rank = IDF * TF * tag_rank * pop_rank;
 				if (url_rank_table.containsKey(url)) {
@@ -41,23 +40,6 @@ public class Ranker {
 					url_rank_table.put(url, rank);
 				}
 			}
-//			for (String link:l)
-//			{
-//
-//			}
-
-
-//			Double TF=link_doc.getDouble("NormalizedTF");
-//			double rank=TF*IDF/**doc.getInteger("Max_rank")*/;
-//			String url=link_doc.getString("Url_id");
-//			if(url_rank_table.contains(url))
-//			{
-//				url_rank_table.put(url,url_rank_table.get(url)+rank);
-//			}
-//			else
-//			{
-//				url_rank_table.put(url,rank);
-//			}
 		}
 		ArrayList<String> l = sortByValues(url_rank_table);
 		return l;
