@@ -64,10 +64,14 @@ public class QProcessor implements Runnable  {
 	    double total_docs = controller.getTotalDocsCount();
 	    Ranker r = new Ranker(result, total_docs);
 	    ArrayList<String> sorted_links = r.rank_pages();
-	    int min_size=min((this.offset*10)+9,sorted_links.size());
-	   for(int i=(this.offset*10);i<=min_size;i++) {
-//		    System.out.println(file_name);
+	    if (this.offset >= sorted_links.size()) {
+		    this.offset = 0;
 	    }
+	    int min_size = min((this.offset + 9), sorted_links.size());
+	    sorted_links = new ArrayList<>(sorted_links.subList(this.offset, min_size));
+//	   for(int i=(this.offset*10);i<=min_size;i++) {
+//		    System.out.println(file_name);
+//	    }
 //	    result.filter("")
 
 //	    ArrayList
@@ -101,6 +105,7 @@ public class QProcessor implements Runnable  {
         controller.queryResult_collection.insertOne(result1);*/
 //    }
     }
+
 
 	private void filterByPosition(FindIterable<Document> result) {
 		for (Document doc : result) {
