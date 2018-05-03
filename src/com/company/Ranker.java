@@ -22,16 +22,26 @@ public class Ranker {
 		//this.popular_urls=Popular_pages(ranked_urls);
 	}
 
-	public ArrayList<String> rank_pages() {
+	public ArrayList<String> rank_pages(UrlFilename url_file_name) {
 		Hashtable<String, Double> url_rank_table = new Hashtable<String, Double>();
+		url_file_name.url_filename = new Hashtable<String, String>();
+
 		for (Document word_url : words_urls) {
 			ArrayList<Document> word_urls = (ArrayList<Document>) word_url.get("token_info");
 			ArrayList<Document> pop_ranks = (ArrayList<Document>) word_url.get("page_rank");
 			double IDF = log(total_docs / (double) word_urls.size());
 			for (Document link_doc : word_urls) {
 				String url = link_doc.getString("Url_id");
+
 				double TF = link_doc.getDouble("NormalizedTF");
-				double pop_rank = getRank(url, pop_ranks);
+				Document frontierInfo = getFrontierInfo(url, pop_ranks);
+				double pop_rank = 1;
+				String checksum;
+				if (frontierInfo != null) {
+					pop_rank = frontierInfo.getDouble("rank");
+					checksum = frontierInfo.getString("checksum");
+					url_file_name.url_filename.put(url, checksum);
+				}
 				double tag_rank = link_doc.getInteger("Max_rank");
 				double rank = IDF * TF * tag_rank * pop_rank;
 				if (url_rank_table.containsKey(url)) {
@@ -45,13 +55,13 @@ public class Ranker {
 		return l;
 	}
 
-	private double getRank(String url, ArrayList<Document> pop_ranks) {
+	private Document getFrontierInfo(String url, ArrayList<Document> pop_ranks) {
 		for (Document doc : pop_ranks) {
 			if (doc.getString("_id").equals(url)) {
-				return doc.getDouble("rank");
+				return doc;
 			}
 		}
-		return 0;
+		return null;
 	}
 
 	private static ArrayList<String> sortByValues(Hashtable map) {

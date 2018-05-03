@@ -62,8 +62,8 @@ public class Indexer implements Runnable {
 					Hashtable<String, Integer> max_word_rank_table = new Hashtable<String, Integer>();
 					System.out.println("indexing: " + urlfFilename[0]);
 					File input = new File("Pages/" + urlfFilename[1] + ".html");
-					controller.deleteInvertedFile(urlfFilename[0]);
 					Document doc = Jsoup.parse(input, "UTF-8", urlfFilename[0]);
+					controller.deleteInvertedFile(urlfFilename[0]);
 					Elements body = doc.getAllElements().select(":not(head)");
 					int pos = 0;
 					for (Element element : body) {
@@ -147,7 +147,7 @@ public class Indexer implements Runnable {
 		ArrayList<String> out = new ArrayList<String>();
 		PorterStemmer stemmer = new PorterStemmer();
 		for(int i=0;i<data_in.length;i++) {
-			String x = stemmer.stem(data_in[i].toLowerCase().trim());
+			String x = stemmer.stem(data_in[i].toLowerCase().trim()).trim();
 			if (!x.isEmpty())
 				out.add(x);
 		}

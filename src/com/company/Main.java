@@ -17,8 +17,8 @@ public class Main {
 	public static void main(String[] args) throws IOException, URISyntaxException {
 
 		Scanner scanner = new Scanner(System.in);
-		System.out.print("number of Threads: \n");
-		int num_of_threads = scanner.nextInt();
+//		System.out.print("number of Threads: \n");
+//		int num_of_threads = scanner.nextInt();
 //		Pattern pattern = Pattern.compile("(https?://)([^:^/]*)(:\\d*)?(.*)?");
 //		String url="https://docs.oracle.com/javase/7/docs/api/j ava/net/URI.html?q=h%20ebody";
 //		Matcher matcher = pattern.matcher(url);
@@ -43,13 +43,19 @@ public class Main {
 //        } catch (IOException e) {
 //            e.printStackTrace();
 //        }
-		Thread crawler = new Thread(new CrawlerMain(num_of_threads));
-		Thread indexer = new Thread(new Indexer());
-		Thread ranker = new Thread(new Pop_ranker());
-//		Thread qp=new Thread(new QProcessor("black forg"));
-		crawler.start();
-		indexer.start();
-		ranker.start();
+//		Thread crawler = new Thread(new CrawlerMain(num_of_threads));
+//		Thread indexer = new Thread(new Indexer());
+//		Thread ranker = new Thread(new Pop_ranker());
+		QueryResult qr = new QProcessor().getQueryResult("model teacher", 0);
+		int i = 0;
+		for (String link : qr.links
+				) {
+			System.out.println(link + "-->" + qr.snippets.get(i));
+			i++;
+		}
+//		crawler.start();
+//		indexer.start();
+//		ranker.start();
 //		try {
 //			ranker.join();
 //		}catch (Exception ex)
