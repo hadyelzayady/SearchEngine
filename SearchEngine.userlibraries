@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<eclipse-userlibraries>
+  <library name="opennlp-tools-1.8.4">
+    <archive path="E:/MyJavaDepend/apache-opennlp-1.8.4/lib/opennlp-tools-1.8.4.jar" />
+  </library>
+</eclipse-userlibraries>
+
